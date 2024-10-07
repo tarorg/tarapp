@@ -57,7 +57,7 @@ const productInstances = [
         <tbody>
           {Object.entries(productCore).map(([key, value], index) => (
             <tr style={index !== Object.entries(productCore).length - 1 ? "border-bottom: 1px solid #e5e7eb;" : ""}>
-              <td style={`padding: 0.75rem 1rem; font-weight: 500; ${key === "Medias" ? "cursor: pointer;" : ""}`} data-key={key}>{key}</td>
+              <td style={`padding: 0.75rem 1rem; font-weight: 500; ${key === "Medias" || key === "Type" ? "cursor: pointer;" : ""}`} data-key={key}>{key}</td>
               {key === "Medias" ? (
                 <td style="padding: 0.75rem 1rem; border-left: 1px solid #e5e7eb;" 
                     data-key={key}>
@@ -65,10 +65,13 @@ const productInstances = [
                     <!-- Media thumbnails will be inserted here by JavaScript -->
                   </div>
                 </td>
+              ) : key === "Type" ? (
+                <td style="padding: 0.75rem 1rem; border-left: 1px solid #e5e7eb;" 
+                    data-key={key}></td>
               ) : (
                 <td style="padding: 0.75rem 1rem; border-left: 1px solid #e5e7eb;" 
                     contenteditable="true" 
-                    data-key={key}>{value}</td>
+                    data-key={key}></td>
               )}
             </tr>
           ))}
@@ -181,6 +184,24 @@ const productInstances = [
         <div id="urlInputContainer" style="display: none; margin-top: 16px;">
           <input type="text" id="imageUrlInput" placeholder="Enter image URL" style="width: 100%; padding: 8px; margin-bottom: 8px;">
           <button id="addUrlImage" class="button-primary">Add Image</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add this HTML for the Media bottom sheet -->
+  <div id="mediaBottomSheet" class="bottom-sheet">
+    <div class="scrim"></div>
+    <div class="bottom-sheet-container">
+      <div class="bottom-sheet-header">
+        <div class="bottom-sheet-drag-handle"></div>
+      </div>
+      <div class="bottom-sheet-content">
+        <div id="mediaPreview" style="max-width: 100%; max-height: 70vh; display: flex; justify-content: center; align-items: center; margin-bottom: 16px;">
+          <!-- Media preview will be inserted here by JavaScript -->
+        </div>
+        <div class="choice-chip-group">
+          <button id="removeMediaChip" class="choice-chip" style="background-color: white; color: #000;">Remove</button>
         </div>
       </div>
     </div>
@@ -452,6 +473,33 @@ const productInstances = [
   }
 
   // Remove or comment out the .scroll-button styles if you're not using them anymore
+
+  /* Add these styles to your existing styles */
+  .media-thumbnail {
+    cursor: pointer;
+  }
+
+  #mediaBottomSheet .bottom-sheet-container {
+    max-height: 80vh;
+  }
+
+  #mediaBottomSheet .bottom-sheet-content {
+    padding: 16px;
+  }
+
+  .choice-chip {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .choice-chip:hover {
+    background-color: #f0f0f0;
+  }
 </style>
 
 <script>
@@ -495,6 +543,8 @@ const productInstances = [
     const imageBottomSheet = document.getElementById('imageBottomSheet');
     const mediaGrid = document.getElementById('mediaGrid');
     const mediasCell = document.querySelector('td[data-key="Medias"]');
+    const mediaBottomSheet = document.getElementById('mediaBottomSheet');
+    const mediaPreview = document.getElementById('mediaPreview');
 
     let currentCell = null;
 
@@ -503,6 +553,8 @@ const productInstances = [
     };
 
     let productMedias = [];
+
+    let currentMediaIndex = -1;
 
     function updatePageState(newState) {
       pageState = { ...pageState, ...newState };
@@ -559,17 +611,19 @@ const productInstances = [
 
     function loadProductData(product) {
       Object.entries(product).forEach(([key, value]) => {
-        const cell = document.querySelector(`td[data-key="${key}"]`);
+        const cell = document.querySelector(`td[data-key="${key}"]:last-child`);
         if (cell) {
           if (key === 'Medias') {
             productMedias = Array.isArray(value) ? value : [];
             renderMediaThumbnails();
+          } else if (key === 'Type') {
+            cell.textContent = value;
+            updatePageState({ type: value });
           } else {
             cell.textContent = value;
           }
         }
       });
-      updatePageState({ type: product.Type });
     }
 
     async function saveProductData() {
@@ -691,7 +745,7 @@ const productInstances = [
     function renderMediaThumbnails() {
       if (mediaGrid) {
         mediaGrid.innerHTML = productMedias.map((file, index) => `
-          <div class="media-thumbnail" title="${file.name}">
+          <div class="media-thumbnail" title="${file.name}" data-index="${index}">
             ${file.type.startsWith('image/') 
               ? `<img src="${URL.createObjectURL(file)}" alt="${file.name}" style="width: 40px; height: 40px; object-fit: cover;">` 
               : `<span class="material-icons media-icon">videocam</span>`
@@ -725,6 +779,43 @@ const productInstances = [
       input.click();
     }
 
+    function openMediaBottomSheet(file, index) {
+      if (mediaBottomSheet && mediaPreview) {
+        currentMediaIndex = index;
+        mediaPreview.innerHTML = '';
+        if (file.type.startsWith('image/')) {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(file);
+          img.style.maxWidth = '100%';
+          img.style.maxHeight = '70vh';
+          mediaPreview.appendChild(img);
+        } else if (file.type.startsWith('video/')) {
+          const video = document.createElement('video');
+          video.src = URL.createObjectURL(file);
+          video.controls = true;
+          video.style.maxWidth = '100%';
+          video.style.maxHeight = '70vh';
+          mediaPreview.appendChild(video);
+        }
+        mediaBottomSheet.classList.add('active');
+      }
+    }
+
+    function closeMediaBottomSheet() {
+      if (mediaBottomSheet) {
+        mediaBottomSheet.classList.remove('active');
+        currentMediaIndex = -1;
+      }
+    }
+
+    function removeMedia() {
+      if (currentMediaIndex !== -1) {
+        productMedias.splice(currentMediaIndex, 1);
+        renderMediaThumbnails();
+        closeMediaBottomSheet();
+      }
+    }
+
     // Event Listeners
     if (coreTable) {
       coreTable.addEventListener('click', (e) => {
@@ -742,9 +833,22 @@ const productInstances = [
       }, true);
       coreTable.addEventListener('blur', handleCellBlur, true);
       coreTable.addEventListener('keydown', handleCellKeydown, true);
+
+      const mediasValueCell = coreTable.querySelector('td[data-key="Medias"]:last-child');
+      if (mediasValueCell) {
+        mediasValueCell.addEventListener('click', (e) => {
+          const thumbnail = e.target.closest('.media-thumbnail');
+          if (thumbnail) {
+            const index = parseInt(thumbnail.dataset.index, 10);
+            if (!isNaN(index) && index >= 0 && index < productMedias.length) {
+              openMediaBottomSheet(productMedias[index], index);
+            }
+          }
+        });
+      }
     }
 
-    const typeCell = document.querySelector('td[data-key="Type"]');
+    const typeCell = document.querySelector('td[data-key="Type"]:last-child');
     if (typeCell) {
       typeCell.removeAttribute('contenteditable');
     }
@@ -773,6 +877,19 @@ const productInstances = [
           closeTypeBottomSheet();
         }
       });
+    }
+
+    if (mediaBottomSheet) {
+      mediaBottomSheet.addEventListener('click', (e) => {
+        if (e.target === mediaBottomSheet || e.target.classList.contains('scrim')) {
+          closeMediaBottomSheet();
+        }
+      });
+
+      const removeMediaChip = mediaBottomSheet.querySelector('#removeMediaChip');
+      if (removeMediaChip) {
+        removeMediaChip.addEventListener('click', removeMedia);
+      }
     }
 
     try {
