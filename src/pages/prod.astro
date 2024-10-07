@@ -8,8 +8,8 @@ let existingProduct = null;
 const productCore = {
   "Name": "",
   "SKU": "",
+  "Medias": "",
   "Qty": "",
-  "Image": "",
   "Type": "Item",
   "Category": "",
   "Description": "Notes on product",
@@ -57,10 +57,19 @@ const productInstances = [
         <tbody>
           {Object.entries(productCore).map(([key, value], index) => (
             <tr style={index !== Object.entries(productCore).length - 1 ? "border-bottom: 1px solid #e5e7eb;" : ""}>
-              <td style="padding: 0.75rem 1rem; font-weight: 500;">{key}</td>
-              <td style="padding: 0.75rem 1rem; border-left: 1px solid #e5e7eb;" 
-                  contenteditable="true" 
-                  data-key={key}>{value}</td>
+              <td style={`padding: 0.75rem 1rem; font-weight: 500; ${key === "Medias" ? "cursor: pointer;" : ""}`} data-key={key}>{key}</td>
+              {key === "Medias" ? (
+                <td style="padding: 0.75rem 1rem; border-left: 1px solid #e5e7eb;" 
+                    data-key={key}>
+                  <div id="mediaGrid" style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    <!-- Media thumbnails will be inserted here by JavaScript -->
+                  </div>
+                </td>
+              ) : (
+                <td style="padding: 0.75rem 1rem; border-left: 1px solid #e5e7eb;" 
+                    contenteditable="true" 
+                    data-key={key}>{value}</td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -141,6 +150,37 @@ const productInstances = [
           <button class="choice-chip" data-value="Item">Item</button>
           <button class="choice-chip" data-value="Variants">Variants</button>
           <button class="choice-chip" data-value="Service">Service</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update the Image bottom sheet -->
+  <div id="imageBottomSheet" class="bottom-sheet">
+    <div class="scrim"></div>
+    <div class="bottom-sheet-container">
+      <div class="bottom-sheet-header">
+        <div class="bottom-sheet-drag-handle"></div>
+      </div>
+      <div class="bottom-sheet-content">
+        <h3 style="margin-bottom: 16px;">Add Image</h3>
+        <div class="image-options">
+          <button class="image-option" id="chooseFromLibrary">
+            <span class="material-icons">photo_library</span>
+            <span>Choose from library</span>
+          </button>
+          <button class="image-option" id="takePhoto">
+            <span class="material-icons">photo_camera</span>
+            <span>Take a photo</span>
+          </button>
+          <button class="image-option" id="addFromUrl">
+            <span class="material-icons">link</span>
+            <span>Add image from URL</span>
+          </button>
+        </div>
+        <div id="urlInputContainer" style="display: none; margin-top: 16px;">
+          <input type="text" id="imageUrlInput" placeholder="Enter image URL" style="width: 100%; padding: 8px; margin-bottom: 8px;">
+          <button id="addUrlImage" class="button-primary">Add Image</button>
         </div>
       </div>
     </div>
@@ -326,6 +366,92 @@ const productInstances = [
     box-sizing: border-box;
     width: 100%;
   }
+
+  .image-options {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .image-option {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background-color: #F4EFF4;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .image-option:hover {
+    background-color: #E8DEF8;
+  }
+
+  .image-option .material-icons {
+    margin-right: 12px;
+  }
+
+  .thumbnail {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  #imageCarouselContainer {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  #imageThumbnails {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding-bottom: 12px;
+    scroll-behavior: smooth;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+
+  #imageThumbnails::-webkit-scrollbar {
+    display: none; /* WebKit */
+  }
+
+  #imageGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .thumbnail {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 3px;
+    flex-shrink: 0;
+    border: 1px solid #e0e0e0;
+  }
+
+  .file-thumbnail {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f0f0;
+    font-size: 20px;
+    color: #666;
+  }
+
+  .file-icon {
+    font-size: 24px;
+  }
+
+  // Remove or comment out the .scroll-button styles if you're not using them anymore
 </style>
 
 <script>
@@ -366,12 +492,17 @@ const productInstances = [
     const instancesSection = document.getElementById('instancesSection');
     const instancesTitle = document.getElementById('instancesTitle');
     const instancesTableBody = document.getElementById('instancesTableBody');
+    const imageBottomSheet = document.getElementById('imageBottomSheet');
+    const mediaGrid = document.getElementById('mediaGrid');
+    const mediasCell = document.querySelector('td[data-key="Medias"]');
 
     let currentCell = null;
 
     let pageState = {
       type: localStorage.getItem('productType') || 'Variant Item'
     };
+
+    let productMedias = [];
 
     function updatePageState(newState) {
       pageState = { ...pageState, ...newState };
@@ -430,7 +561,12 @@ const productInstances = [
       Object.entries(product).forEach(([key, value]) => {
         const cell = document.querySelector(`td[data-key="${key}"]`);
         if (cell) {
-          cell.textContent = value;
+          if (key === 'Medias') {
+            productMedias = Array.isArray(value) ? value : [];
+            renderMediaThumbnails();
+          } else {
+            cell.textContent = value;
+          }
         }
       });
       updatePageState({ type: product.Type });
@@ -440,7 +576,12 @@ const productInstances = [
       const productData = {};
       const cells = coreTable.querySelectorAll('td[data-key]');
       cells.forEach(cell => {
-        productData[cell.dataset.key] = cell.textContent.trim();
+        const key = cell.dataset.key;
+        if (key === 'Medias') {
+          productData[key] = productMedias;
+        } else {
+          productData[key] = cell.textContent.trim();
+        }
       });
 
       productData.id = productId || Date.now().toString();
@@ -484,11 +625,28 @@ const productInstances = [
       currentCell = null;
     }
 
+    function openImageBottomSheet() {
+      if (imageBottomSheet) imageBottomSheet.classList.add('active');
+    }
+
+    function closeImageBottomSheet() {
+      if (imageBottomSheet) imageBottomSheet.classList.remove('active');
+    }
+
     function handleCellFocus(e) {
-      const cell = e.target.closest('td[contenteditable]');
-      if (cell && cell.dataset.key !== 'Type') {
-        cell.dataset.before = cell.textContent;
-        cell.classList.add('cell-highlight');
+      const cell = e.target.closest('td[data-key]');
+      if (cell) {
+        const key = cell.dataset.key;
+        if (key === 'Medias' && cell === cell.parentElement.firstElementChild) {
+          e.preventDefault();
+          openMediaSelector();
+        } else if (key === 'Type') {
+          e.preventDefault();
+          openTypeBottomSheet();
+        } else if (cell.hasAttribute('contenteditable')) {
+          cell.dataset.before = cell.textContent;
+          cell.classList.add('cell-highlight');
+        }
       }
     }
 
@@ -530,17 +688,70 @@ const productInstances = [
       if (typeBottomSheet) typeBottomSheet.classList.remove('active');
     }
 
+    function renderMediaThumbnails() {
+      if (mediaGrid) {
+        mediaGrid.innerHTML = productMedias.map((file, index) => `
+          <div class="media-thumbnail" title="${file.name}">
+            ${file.type.startsWith('image/') 
+              ? `<img src="${URL.createObjectURL(file)}" alt="${file.name}" style="width: 40px; height: 40px; object-fit: cover;">` 
+              : `<span class="material-icons media-icon">videocam</span>`
+            }
+          </div>
+        `).join('');
+      }
+    }
+
+    function addMediaToProduct(file) {
+      productMedias.push(file);
+      renderMediaThumbnails();
+    }
+
+    function openMediaSelector() {
+      console.log('Opening media selector'); // Add this line for debugging
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.multiple = true;
+      input.accept = 'image/*,video/*';
+      input.onchange = (e) => {
+        const files = e.target.files;
+        if (files) {
+          for (let i = 0; i < files.length; i++) {
+            if (files[i].type.startsWith('image/') || files[i].type.startsWith('video/')) {
+              addMediaToProduct(files[i]);
+            }
+          }
+        }
+      };
+      input.click();
+    }
+
     // Event Listeners
     if (coreTable) {
-      coreTable.addEventListener('focus', handleCellFocus, true);
+      coreTable.addEventListener('click', (e) => {
+        const cell = e.target.closest('td[data-key]');
+        if (cell) {
+          handleCellFocus(e);
+        }
+      });
+      coreTable.addEventListener('focus', (e) => {
+        const cell = e.target.closest('td[contenteditable]');
+        if (cell) {
+          cell.dataset.before = cell.textContent;
+          cell.classList.add('cell-highlight');
+        }
+      }, true);
       coreTable.addEventListener('blur', handleCellBlur, true);
       coreTable.addEventListener('keydown', handleCellKeydown, true);
     }
 
     const typeCell = document.querySelector('td[data-key="Type"]');
     if (typeCell) {
-      typeCell.addEventListener('click', openTypeBottomSheet);
       typeCell.removeAttribute('contenteditable');
+    }
+
+    const mediasTypeCell = document.querySelector('td[data-key="Medias"]');
+    if (mediasTypeCell) {
+      mediasTypeCell.removeAttribute('contenteditable');
     }
 
     if (typeBottomSheet) {
