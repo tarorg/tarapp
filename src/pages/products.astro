@@ -1,0 +1,193 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Menu from '../components/Menu.astro';
+---
+
+<Layout title="products">
+  <Menu />
+  <main style="max-width: 1200px; margin: 0 auto; padding: 1rem;">
+    <div class="search-container">
+      <div class="search-bar">
+        <span class="material-icons">search</span>
+        <input type="text" id="searchInput" placeholder="Search products" class="search-input">
+      </div>
+    </div>
+
+    <div style="background-color: white; border-radius: 0.5rem; overflow: hidden;">
+      <table id="productTable" style="width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #e5e7eb; border-radius: 0.5rem;">
+        <thead>
+          <tr>
+            <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e5e7eb;">SKU</th>
+            <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e5e7eb; border-left: 1px solid #e5e7eb;">Name</th>
+            <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e5e7eb; border-left: 1px solid #e5e7eb;">Qty</th>
+          </tr>
+        </thead>
+        <tbody id="productTableBody">
+          <!-- Product rows will be inserted here by JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Material 3 FAB -->
+  <a href="/prod" class="fab">
+    <span class="material-icons">add</span>
+  </a>
+</Layout>
+
+<style>
+  main {
+    /* Padding removed */
+  }
+
+  .search-container {
+    margin: 2rem 0;
+  }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    background-color: #f5f5f5;
+    border-radius: 28px;
+    padding: 0.5rem 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .material-icons {
+    color: #5f6368;
+    margin-right: 0.5rem;
+  }
+
+  .search-input {
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    width: 100%;
+    outline: none;
+    color: #202124;
+  }
+
+  .search-input::placeholder {
+    color: #5f6368;
+  }
+
+  .fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background-color: #FFFFFF;
+    color: #1D192B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    border: 1px solid #E0E0E0;
+  }
+
+  .fab:hover {
+    background-color: #F4EFF4;
+  }
+
+  .fab .material-icons {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .product-name {
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .product-name:hover {
+    background-color: #F4EFF4;
+  }
+
+  /* Add this new style for the table */
+  #productTable {
+    margin: 0 0; /* Negative margin to counteract the main padding */
+    width: calc(100%); /* Increase width to account for the negative margin */
+  }
+</style>
+
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const productTableBody = document.getElementById('productTableBody');
+    const searchInput = document.getElementById('searchInput');
+
+    let db;
+
+    const openDB = () => {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open('ProductDatabase', 1);
+        request.onerror = (event) => reject('IndexedDB error: ' + event.target.error);
+        request.onsuccess = (event) => resolve(event.target.result);
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          db.createObjectStore('products', { keyPath: 'id' });
+        };
+      });
+    };
+
+    const getAllProducts = () => {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['products'], 'readonly');
+        const objectStore = transaction.objectStore('products');
+        const request = objectStore.getAll();
+        request.onerror = (event) => reject('Error fetching products: ' + event.target.error);
+        request.onsuccess = (event) => resolve(event.target.result);
+      });
+    };
+
+    try {
+      db = await openDB();
+      const products = await getAllProducts();
+      renderProducts(products);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+
+    function renderProducts(products) {
+      productTableBody.innerHTML = '';
+      products.forEach(product => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td style="padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb;">${product.SKU || ''}</td>
+          <td class="product-name" style="padding: 0.75rem 1rem; font-weight: 500; border-bottom: 1px solid #e5e7eb; border-left: 1px solid #e5e7eb;" data-id="${product.id}">${product.Name || ''}</td>
+          <td style="padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; border-left: 1px solid #e5e7eb;">${product.Qty || ''}</td>
+        `;
+        productTableBody.appendChild(row);
+      });
+    }
+
+    productTableBody.addEventListener('click', (e) => {
+      const nameCell = e.target.closest('.product-name');
+      if (nameCell) {
+        const productId = nameCell.dataset.id;
+        window.location.href = `/prod?id=${productId}`;
+      }
+    });
+
+    searchInput.addEventListener('input', async function() {
+      const searchTerm = this.value.toLowerCase();
+      try {
+        const allProducts = await getAllProducts();
+        const filteredProducts = allProducts.filter(product => 
+          product.Name.toLowerCase().includes(searchTerm) ||
+          product.SKU.toLowerCase().includes(searchTerm)
+        );
+        renderProducts(filteredProducts);
+      } catch (error) {
+        console.error('Error searching products:', error);
+      }
+    });
+  });
+</script>
