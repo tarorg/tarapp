@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Menu from '../components/Menu.astro';
+import categories from '../data/categories.json';
 
 const productId = Astro.url.searchParams.get('id');
 let existingProduct = null;
@@ -206,6 +207,17 @@ const productInstances = [
       </div>
     </div>
   </div>
+
+  <!-- Replace the Category dropdown structure -->
+  <div id="categoryDropdown" class="category-dropdown">
+    <div id="categoryList" class="category-list">
+      {categories.map((category) => (
+        <div class="category-item">
+          <span class="category-name">{category.name}</span>
+        </div>
+      ))}
+    </div>
+  </div>
 </Layout>
 
 <style>
@@ -242,6 +254,8 @@ const productInstances = [
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    max-height: 90vh; /* Limit the height to 90% of the viewport */
+    overflow-y: auto; /* Add scrolling if content exceeds the height */
   }
 
   .bottom-sheet-header {
@@ -259,7 +273,7 @@ const productInstances = [
 
   .bottom-sheet-content {
     padding: 0;
-    width: 100%; /* Changed from 90% to 100% */
+    width: 100%;
     max-width: 600px;
     margin: 0 auto;
   }
@@ -500,6 +514,156 @@ const productInstances = [
   .choice-chip:hover {
     background-color: #f0f0f0;
   }
+
+  .search-container {
+    margin-bottom: 16px;
+  }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    background-color: #f5f5f5;
+    border-radius: 28px;
+    padding: 0.5rem 1rem;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .material-icons {
+    color: #5f6368;
+    margin-right: 0.5rem;
+  }
+
+  .search-input {
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    width: 100%;
+    outline: none;
+    color: #202124;
+  }
+
+  .search-input::placeholder {
+    color: #5f6368;
+  }
+
+  .category-list {
+    max-height: calc(80vh - 120px);
+    overflow-y: auto;
+    padding-right: 16px;
+  }
+
+  .category-item {
+    margin-bottom: 2px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+
+  .category-name {
+    font-weight: bold;
+    margin-bottom: 8px;
+    display: block;
+    font-size: 16px;
+    color: #333;
+  }
+
+  .subcategory-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  .choice-chip {
+    padding: 8px 16px;
+    border-radius: 16px;
+    border: 1px solid #e0e0e0;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    background-color: #fff;
+    color: #333;
+  }
+
+  .choice-chip:hover {
+    background-color: #f0f0f0;
+    border-color: #d0d0d0;
+  }
+
+  .choice-chip:active {
+    background-color: #e8e8e8;
+    border-color: #c0c0c0;
+  }
+
+  .category-dropdown {
+    position: absolute;
+    background-color: white; /* Ensure white background */
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: none;
+    z-index: 1000;
+    overflow-y: auto;
+    max-height: 200px; /* Limit the height of the dropdown */
+  }
+
+  .category-list {
+    background-color: white; /* Ensure white background for the list */
+  }
+
+  .category-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    background-color: white; /* Ensure white background for each item */
+  }
+
+  .category-item:hover {
+    background-color: #f5f5f5; /* Light gray background on hover */
+  }
+
+  .category-name {
+    font-weight: bold;
+    color: #333; /* Dark text color for better contrast on white */
+  }
+
+  .category-dropdown-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .category-search-input {
+    flex-grow: 1;
+    border: none;
+    font-size: 16px;
+    margin-left: 12px;
+    outline: none;
+  }
+
+  .category-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .category-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+  }
+
+  .category-item:hover {
+    background-color: #f5f5f5;
+  }
+
+  .category-name {
+    font-weight: bold;
+  }
+
+  .category-parent {
+    color: #666;
+  }
 </style>
 
 <script>
@@ -697,6 +861,9 @@ const productInstances = [
         } else if (key === 'Type') {
           e.preventDefault();
           openTypeBottomSheet();
+        } else if (key === 'Category') {
+          e.preventDefault();
+          openCategoryDropdown();
         } else if (cell.hasAttribute('contenteditable')) {
           cell.dataset.before = cell.textContent;
           cell.classList.add('cell-highlight');
@@ -815,6 +982,78 @@ const productInstances = [
         closeMediaBottomSheet();
       }
     }
+
+    const categoryDropdown = document.getElementById('categoryDropdown');
+    const categoryCell = document.querySelector('td[data-key="Category"]:last-child');
+    const categoryList = document.getElementById('categoryList');
+
+    function openCategoryDropdown() {
+      if (categoryDropdown && categoryCell) {
+        const rect = categoryCell.getBoundingClientRect();
+        const scrollY = window.scrollY || window.pageYOffset;
+
+        categoryDropdown.style.position = 'absolute';
+        categoryDropdown.style.top = `${rect.bottom + scrollY}px`;
+        categoryDropdown.style.left = `${rect.left}px`;
+        categoryDropdown.style.width = `${rect.width}px`;
+        categoryDropdown.style.maxHeight = '200px'; // Limit the height of the dropdown
+
+        // Ensure the dropdown doesn't go off the bottom of the viewport
+        const viewportHeight = window.innerHeight;
+        const dropdownRect = categoryDropdown.getBoundingClientRect();
+        if (dropdownRect.bottom > viewportHeight) {
+          const overflowY = dropdownRect.bottom - viewportHeight;
+          categoryDropdown.style.maxHeight = `${200 - overflowY}px`;
+        }
+
+        categoryDropdown.style.display = 'block';
+        filterCategories(categoryCell.textContent.trim());
+      }
+    }
+
+    function closeCategoryDropdown() {
+      if (categoryDropdown) {
+        categoryDropdown.style.display = 'none';
+      }
+    }
+
+    function filterCategories(searchTerm) {
+      const categoryItems = categoryList.querySelectorAll('.category-item');
+      categoryItems.forEach((item) => {
+        const categoryName = item.querySelector('.category-name').textContent.toLowerCase();
+        const showCategory = categoryName.includes(searchTerm.toLowerCase());
+        item.style.display = showCategory ? 'block' : 'none';
+      });
+    }
+
+    if (categoryCell) {
+      categoryCell.addEventListener('click', (e) => {
+        e.preventDefault();
+        openCategoryDropdown();
+      });
+
+      categoryCell.addEventListener('input', (e) => {
+        filterCategories(e.target.textContent.trim());
+      });
+    }
+
+    if (categoryList) {
+      categoryList.addEventListener('click', (e) => {
+        const categoryItem = e.target.closest('.category-item');
+        if (categoryItem && categoryCell) {
+          const categoryName = categoryItem.querySelector('.category-name').textContent;
+          categoryCell.textContent = categoryName;
+          closeCategoryDropdown();
+        }
+      });
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!categoryDropdown.contains(e.target) && e.target !== categoryCell) {
+        closeCategoryDropdown();
+      }
+    });
 
     // Event Listeners
     if (coreTable) {
