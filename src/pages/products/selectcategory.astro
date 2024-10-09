@@ -1,8 +1,8 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import categories from '../data/categories.json';
+import Layout from '../../layouts/Layout.astro';
+import categories from '../../data/categories.json';
 
-const returnUrl = Astro.url.searchParams.get('returnUrl') || '/prod';
+const returnUrl = Astro.url.searchParams.get('returnUrl') || '/products/prod';
 ---
 
 <Layout title="Select Category">
@@ -172,7 +172,7 @@ const returnUrl = Astro.url.searchParams.get('returnUrl') || '/prod';
       if (subcategoryItem) {
         const selectedCategory = subcategoryItem.dataset.category;
         const urlParams = new URLSearchParams(window.location.search);
-        const returnUrl = urlParams.get('returnUrl') || '/prod';
+        const returnUrl = urlParams.get('returnUrl') || '/products/prod';
 
         // Append the selected category to the return URL
         const updatedReturnUrl = new URL(returnUrl, window.location.origin);

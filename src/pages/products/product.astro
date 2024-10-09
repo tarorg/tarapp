@@ -1,0 +1,169 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Menu from '../../components/Menu.astro';
+import categories from '../../data/categories.json';
+
+const productId = Astro.url.searchParams.get('id');
+let existingProduct = null;
+
+const productCore = {
+  "Name": "",
+  "Medias": "",
+  "Type": "Item",
+  "Category": "",
+  "Notes": ""
+};
+---
+
+<Layout title="Product">
+  <Menu />
+  <main style="max-width: 1200px; margin: 0 auto; padding: 1rem 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h1 style="font-size: 20px; font-weight: bold;">{productId ? 'Edit Product' : 'Product'}</h1>
+      <button id="submitButton" class="button-tonal" style="border-radius: 5px;">Submit</button>
+    </div>
+    <div style="background-color: white; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); margin-bottom: 2rem; overflow: hidden;">
+      <table id="coreTable" style="width: 100%; border-collapse: collapse;">
+        <tbody>
+          {Object.entries(productCore).map(([key, value], index) => (
+            <tr style={index !== Object.entries(productCore).length - 1 ? "border-bottom: 1px solid #e5e7eb;" : ""}>
+              <td style={`padding: 0.75rem 1rem; font-weight: 500; width: 30%; ${key === "Medias" || key === "Type" || key === "Category" ? "cursor: pointer;" : ""}`} data-key={key}>{key}</td>
+              {key === "Medias" ? (
+                <td style="padding: 0.75rem 1rem;" data-key={key}>
+                  <div id="mediaGrid" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                    <!-- Media thumbnails will be inserted here by JavaScript -->
+                  </div>
+                </td>
+              ) : key === "Type" ? (
+                <td style="padding: 0.75rem 1rem; width: 70%; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" data-key={key}>
+                  <span id="typeValue" style="flex-grow: 1; margin-right: 8px;">Item</span>
+                  <span class="material-icons" style="font-size: 18px; flex-shrink: 0;">chevron_right</span>
+                </td>
+              ) : key === "Category" ? (
+                <td style="padding: 0.75rem 1rem; width: 70%;" data-key={key}></td>
+              ) : (
+                <td style="padding: 0.75rem 1rem; width: 70%;" contenteditable="true" data-key={key}></td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .cell-highlight {
+    background-color: #f5f5f5;
+    outline: none;
+  }
+
+  [contenteditable="true"]:focus {
+    background-color: #f5f5f5;
+    outline: none;
+    box-shadow: none;
+  }
+
+  .button-tonal {
+    background-color: #FFFFFF;
+    color: #1D192B;
+    border: 1px solid #79747E;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .button-tonal:hover {
+    background-color: #F4EFF4;
+  }
+
+  .button-tonal:active {
+    background-color: #E8DEF8;
+  }
+
+  .thumbnail {
+    width: auto;
+    height: 20px;
+    object-fit: cover;
+    border-radius: 2px;
+    flex-shrink: 0;
+    border: 1px solid #e0e0e0;
+  }
+</style>
+
+<script define:vars={{ categories, productId }}>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const coreTable = document.getElementById('coreTable');
+    const submitButton = document.getElementById('submitButton');
+    const typeCell = document.querySelector('td[data-key="Type"]');
+    const typeValue = document.getElementById('typeValue');
+    const mediaGrid = document.getElementById('mediaGrid');
+
+    const typeOptions = ['Item', 'Variants', 'Service'];
+    let currentTypeIndex = 0;
+
+    // Function to add media thumbnail
+    function addMediaThumbnail(mediaUrl) {
+      const thumbnail = document.createElement('img');
+      thumbnail.src = mediaUrl;
+      thumbnail.alt = 'Media thumbnail';
+      thumbnail.className = 'thumbnail';
+      mediaGrid.appendChild(thumbnail);
+    }
+
+    // Check if there are selected media from the upload page
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedMedia = urlParams.getAll('selectedMedia');
+    if (selectedMedia.length > 0) {
+      selectedMedia.forEach(mediaId => {
+        // In a real application, you'd fetch the actual media URL based on the ID
+        // For this example, we'll use a placeholder
+        addMediaThumbnail(`https://via.placeholder.com/150?text=Media${mediaId}`);
+      });
+      // Clear the selectedMedia from the URL to prevent duplicates on page refresh
+      urlParams.delete('selectedMedia');
+      const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+      window.history.replaceState({}, '', newUrl);
+    }
+
+    if (coreTable) {
+      coreTable.addEventListener('focus', (e) => {
+        const cell = e.target.closest('td[contenteditable]');
+        if (cell) {
+          cell.classList.add('cell-highlight');
+        }
+      }, true);
+
+      coreTable.addEventListener('blur', (e) => {
+        const cell = e.target.closest('td[contenteditable]');
+        if (cell) {
+          cell.classList.remove('cell-highlight');
+        }
+      }, true);
+
+      coreTable.addEventListener('click', (e) => {
+        const cell = e.target.closest('td[data-key]');
+        if (cell) {
+          const key = cell.dataset.key;
+          if (key === 'Medias') {
+            window.location.href = '/upload?returnUrl=' + encodeURIComponent(window.location.href);
+          } else if (key === 'Category') {
+            window.location.href = '/products/selectcategory?returnUrl=' + encodeURIComponent(window.location.href);
+          } else if (key === 'Type') {
+            currentTypeIndex = (currentTypeIndex + 1) % typeOptions.length;
+            typeValue.textContent = typeOptions[currentTypeIndex];
+          }
+        }
+      });
+    }
+
+    if (submitButton) {
+      submitButton.addEventListener('click', () => {
+        // Handle form submission (functionality to be implemented)
+      });
+    }
+  });
+</script>

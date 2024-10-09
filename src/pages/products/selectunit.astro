@@ -1,8 +1,8 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import units from '../data/units.json';
+import Layout from '../../layouts/Layout.astro';
+import units from '../../data/units.json';
 
-const returnUrl = Astro.url.searchParams.get('returnUrl') || '/prod';
+const returnUrl = Astro.url.searchParams.get('returnUrl') || '/products/prod';
 ---
 
 <Layout title="Select Unit">
@@ -172,7 +172,7 @@ const returnUrl = Astro.url.searchParams.get('returnUrl') || '/prod';
       if (subunitItem) {
         const selectedUnit = subunitItem.dataset.unit;
         const urlParams = new URLSearchParams(window.location.search);
-        const returnUrl = urlParams.get('returnUrl') || '/prod';
+        const returnUrl = urlParams.get('returnUrl') || '/products/prod';
 
         // Append the selected unit to the return URL
         const updatedReturnUrl = new URL(returnUrl, window.location.origin);

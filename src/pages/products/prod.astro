@@ -1,7 +1,7 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Menu from '../components/Menu.astro';
-import categories from '../data/categories.json';
+import Layout from '../../layouts/Layout.astro';
+import Menu from '../../components/Menu.astro';
+import categories from '../../data/categories.json';
 
 const productId = Astro.url.searchParams.get('id');
 let existingProduct = null;
@@ -9,10 +9,8 @@ let existingProduct = null;
 const productCore = {
   "Name": "",
   "Medias": "",
-  "Qty": "",
   "Type": "Item",
   "Category": "",
-  "Unit": "",
   "Notes": ""
 };
 
@@ -37,16 +35,11 @@ const productInstances = [
   <main style="max-width: 1200px; margin: 0 auto; padding: 1rem 20px;"> <!-- Changed padding -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
       <h1 style="font-size: 20px; font-weight: bold;">{productId ? 'Edit Product' : 'Product'}</h1>
-      <button id="submitButton" class="button-tonal">Submit</button>
+      <button id="submitButton" class="button-tonal" style="border-radius: 5px;">Submit</button>
     </div>
     <div style="background-color: white; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); margin-bottom: 2rem; overflow: hidden;">
       <table id="coreTable" style="width: 100%; border-collapse: collapse;">
-        <thead>
-          <tr style="border-bottom: 1px solid #e5e7eb;">
-            <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600;">Type</th>
-            <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; border-left: 1px solid #e5e7eb;">Values</th>
-          </tr>
-        </thead>
+        <!-- Removed thead section -->
         <tbody>
           {Object.entries(productCore).map(([key, value], index) => (
             <tr style={index !== Object.entries(productCore).length - 1 ? "border-bottom: 1px solid #e5e7eb;" : ""}>
@@ -556,24 +549,16 @@ const productInstances = [
 
   .choice-chip {
     padding: 8px 16px;
-    border-radius: 16px;
-    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    border: none;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-    background-color: #fff;
-    color: #333;
+    transition: background-color 0.3s ease;
   }
 
   .choice-chip:hover {
     background-color: #f0f0f0;
-    border-color: #d0d0d0;
-  }
-
-  .choice-chip:active {
-    background-color: #e8e8e8;
-    border-color: #c0c0c0;
   }
 
   .category-dropdown {
@@ -697,13 +682,17 @@ const productInstances = [
     flex-wrap: wrap;
     gap: 0.5rem;
   }
+
+  /* Add this new style for the submit button */
+  #submitButton {
+    border-radius: 5px;
+  }
 </style>
 
-<script define:vars={{ categories }}>
+<script define:vars={{ categories, productId }}>
   document.addEventListener('DOMContentLoaded', async () => {
     const productId = new URLSearchParams(window.location.search).get('id');
     const categoryParam = new URLSearchParams(window.location.search).get('category');
-    const unitParam = new URLSearchParams(window.location.search).get('unit');
     let db;
 
     // Move productInstances inside the DOMContentLoaded event listener
@@ -717,12 +706,14 @@ const productInstances = [
 
     const openDB = () => {
       return new Promise((resolve, reject) => {
-        const request = indexedDB.open('ProductDatabase', 1);
+        const request = indexedDB.open('productdb', 1);
         request.onerror = (event) => reject('IndexedDB error: ' + event.target.error);
         request.onsuccess = (event) => resolve(event.target.result);
         request.onupgradeneeded = (event) => {
           const db = event.target.result;
-          db.createObjectStore('products', { keyPath: 'id' });
+          if (!db.objectStoreNames.contains('core')) {
+            db.createObjectStore('core', { keyPath: 'id' });
+          }
         };
       });
     };
@@ -792,52 +783,62 @@ const productInstances = [
       }
     }
 
-    function renderSingleInstance() {
-      const skuCell = document.querySelector('td[data-key="SKU"]');
-      const nameCell = document.querySelector('td[data-key="Name"]');
-      const qtyCell = document.querySelector('td[data-key="Qty"]');
-
+    function renderSingleInstance(product) {
       if (instancesTableBody) {
         instancesTableBody.innerHTML = `
           <tr>
-            <td style="padding: 0.75rem 1rem; font-weight: 500;">${skuCell ? skuCell.textContent : ''}</td>
-            <td style="padding: 0.75rem 1rem; border-left: 1px solid #e5e7eb;">${nameCell ? nameCell.textContent : ''}</td>
-            <td style="padding: 0.75rem 1rem; border-left: 1px solid #e5e7eb;">${qtyCell ? qtyCell.textContent : ''}</td>
+            <td style="padding: 0.75rem 1rem; font-weight: 500;">${product.SKU || ''}</td>
+            <td style="padding: 0.75rem 1rem; border-left: 1px solid #e5e7eb;">${product.Name || ''}</td>
+            <td style="padding: 0.75rem 1rem; border-left: 1px solid #e5e7eb;">${product.Qty || ''}</td>
           </tr>
         `;
       }
     }
 
-    function loadProductData(product) {
-      Object.entries(product).forEach(([key, value]) => {
-        const cell = document.querySelector(`td[data-key="${key}"]:last-child`);
-        if (cell) {
+    async function loadProductData(product) {
+      console.log('Loading product data:', product);
+      const coreTable = document.getElementById('coreTable');
+      if (coreTable) {
+        coreTable.dataset.productId = product.id || '';
+        const cells = coreTable.querySelectorAll('td[data-key]');
+        cells.forEach(cell => {
+          const key = cell.dataset.key;
           if (key === 'Medias') {
-            productMedias = Array.isArray(value) ? value : [];
-            renderMediaThumbnails();
+            if (product[key] && Array.isArray(product[key])) {
+              productMedias = product[key];
+              renderMediaThumbnails();
+            }
           } else if (key === 'Type') {
-            cell.textContent = value;
-            updatePageState({ type: value });
+            cell.textContent = product[key] || 'Item';
+            updatePageState({ type: product[key] || 'Item' });
+            updateSections(product[key] || 'Item');
           } else {
-            cell.textContent = value;
+            cell.textContent = product[key] || '';
           }
-        }
-      });
+        });
+      }
 
-      // Check if there's a category parameter and update the category cell
-      if (categoryParam) {
-        const categoryCell = document.querySelector('td[data-key="Category"]:last-child');
-        if (categoryCell) {
-          categoryCell.textContent = categoryParam;
+      // Load variant attributes if the product type is 'Variants'
+      if (product.Type === 'Variants' && product.variantAttributes) {
+        const variantTable = document.querySelector('#variantSection table tbody');
+        if (variantTable) {
+          variantTable.innerHTML = '';
+          Object.entries(product.variantAttributes).forEach(([key, value]) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td style="padding: 0.75rem 1rem; font-weight: 500;">${key.charAt(0).toUpperCase() + key.slice(1)}</td>
+              <td style="padding: 0.75rem 1rem; border-left: 1px solid #e5e7eb;">${value}</td>
+            `;
+            variantTable.appendChild(row);
+          });
         }
       }
 
-      // Check if there's a unit parameter and update the unit cell
-      if (unitParam) {
-        const unitCell = document.querySelector('td[data-key="Unit"]:last-child');
-        if (unitCell) {
-          unitCell.textContent = unitParam;
-        }
+      // Load instances if they exist
+      if (product.instances && Array.isArray(product.instances)) {
+        renderInstances(product.instances);
+      } else if (product.Type === 'Item') {
+        renderSingleInstance(product);
       }
     }
 
@@ -853,14 +854,17 @@ const productInstances = [
         }
       });
 
+      // Use the existing productId if available, otherwise generate a new one
       productData.id = productId || Date.now().toString();
 
       try {
-        const transaction = db.transaction(['products'], 'readwrite');
-        const objectStore = transaction.objectStore('products');
-        await objectStore.put(productData);
+        const transaction = db.transaction(['core'], 'readwrite');
+        const coreStore = transaction.objectStore('core');
+        await coreStore.put(productData);
         console.log('Product data saved successfully');
-        window.location.href = '/products';
+        
+        // Redirect to the products page after saving
+        window.location.href = '/products/products';
       } catch (error) {
         console.error('Error saving product data:', error);
         alert('Error saving product data');
@@ -914,10 +918,10 @@ const productInstances = [
           openTypeBottomSheet();
         } else if (key === 'Category') {
           e.preventDefault();
-          window.location.href = '/selectcategory?returnUrl=' + encodeURIComponent(window.location.href);
+          window.location.href = '/products/selectcategory?returnUrl=' + encodeURIComponent(window.location.href);
         } else if (key === 'Unit') {
           e.preventDefault();
-          window.location.href = '/selectunit?returnUrl=' + encodeURIComponent(window.location.href);
+          window.location.href = '/products/selectunit?returnUrl=' + encodeURIComponent(window.location.href);
         } else if (cell.hasAttribute('contenteditable')) {
           cell.dataset.before = cell.textContent;
           cell.classList.add('cell-highlight');
@@ -1124,18 +1128,29 @@ const productInstances = [
       db = await openDB();
       
       if (productId) {
-        const transaction = db.transaction(['products'], 'readonly');
-        const objectStore = transaction.objectStore('products');
-        const request = objectStore.get(productId);
-        request.onsuccess = (event) => {
+        const transaction = db.transaction(['core'], 'readonly');
+        const coreStore = transaction.objectStore('core');
+        const productRequest = coreStore.get(productId);
+        
+        productRequest.onsuccess = (event) => {
           const product = event.target.result;
           if (product) {
+            console.log('Product found:', product);
             loadProductData(product);
+          } else {
+            console.error('Product not found');
+            // Handle the case where the product doesn't exist
+            loadProductData({}); // Load empty product data
           }
+        };
+
+        productRequest.onerror = (event) => {
+          console.error('Error fetching product:', event.target.error);
+          // Handle the error (e.g., show an error message to the user)
+          loadProductData({}); // Load empty product data
         };
       } else {
         // If there's no productId, we're creating a new product
-        // Still call loadProductData to handle the category parameter
         loadProductData({});
       }
 
@@ -1144,6 +1159,7 @@ const productInstances = [
       }
     } catch (error) {
       console.error('Error opening IndexedDB:', error);
+      loadProductData({}); // Load empty product data in case of error
     }
 
     // Initial setup
