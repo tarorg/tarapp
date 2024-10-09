@@ -207,17 +207,6 @@ const productInstances = [
       </div>
     </div>
   </div>
-
-  <!-- Replace the Category dropdown structure -->
-  <div id="categoryDropdown" class="category-dropdown">
-    <div id="categoryList" class="category-list">
-      {categories.map((category) => (
-        <div class="category-item">
-          <span class="category-name">{category.name}</span>
-        </div>
-      ))}
-    </div>
-  </div>
 </Layout>
 
 <style>
@@ -664,11 +653,64 @@ const productInstances = [
   .category-parent {
     color: #666;
   }
+
+  .side-panel {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+  }
+
+  .side-panel.active {
+    right: 0;
+  }
+
+  .side-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .close-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+  }
+
+  .category-list {
+    padding: 1rem;
+  }
+
+  .category-item {
+    margin-bottom: 1rem;
+  }
+
+  .category-name {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .subcategory-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
 </style>
 
-<script>
+<script define:vars={{ categories }}>
   document.addEventListener('DOMContentLoaded', async () => {
     const productId = new URLSearchParams(window.location.search).get('id');
+    const categoryParam = new URLSearchParams(window.location.search).get('category');
     let db;
 
     // Move productInstances inside the DOMContentLoaded event listener
@@ -788,6 +830,14 @@ const productInstances = [
           }
         }
       });
+
+      // Check if there's a category parameter and update the category cell
+      if (categoryParam) {
+        const categoryCell = document.querySelector('td[data-key="Category"]:last-child');
+        if (categoryCell) {
+          categoryCell.textContent = categoryParam;
+        }
+      }
     }
 
     async function saveProductData() {
@@ -863,7 +913,8 @@ const productInstances = [
           openTypeBottomSheet();
         } else if (key === 'Category') {
           e.preventDefault();
-          openCategoryDropdown();
+          // Redirect to the new selectcategory page
+          window.location.href = '/selectcategory?returnUrl=' + encodeURIComponent(window.location.href);
         } else if (cell.hasAttribute('contenteditable')) {
           cell.dataset.before = cell.textContent;
           cell.classList.add('cell-highlight');
@@ -911,14 +962,21 @@ const productInstances = [
 
     function renderMediaThumbnails() {
       if (mediaGrid) {
-        mediaGrid.innerHTML = productMedias.map((file, index) => `
-          <div class="media-thumbnail" title="${file.name}" data-index="${index}">
-            ${file.type.startsWith('image/') 
-              ? `<img src="${URL.createObjectURL(file)}" alt="${file.name}" style="width: 40px; height: 40px; object-fit: cover;">` 
-              : `<span class="material-icons media-icon">videocam</span>`
-            }
-          </div>
-        `).join('');
+        mediaGrid.innerHTML = productMedias.map((file, index) => {
+          if (file && typeof file === 'object' && file.type) {
+            return `
+              <div class="media-thumbnail" title="${file.name}" data-index="${index}">
+                ${file.type.startsWith('image/') 
+                  ? `<img src="${URL.createObjectURL(file)}" alt="${file.name}" style="width: 40px; height: 40px; object-fit: cover;">` 
+                  : `<span class="material-icons media-icon">videocam</span>`
+                }
+              </div>
+            `;
+          } else {
+            console.warn(`Invalid media item at index ${index}:`, file);
+            return ''; // Return an empty string for invalid items
+          }
+        }).join('');
       }
     }
 
@@ -982,78 +1040,6 @@ const productInstances = [
         closeMediaBottomSheet();
       }
     }
-
-    const categoryDropdown = document.getElementById('categoryDropdown');
-    const categoryCell = document.querySelector('td[data-key="Category"]:last-child');
-    const categoryList = document.getElementById('categoryList');
-
-    function openCategoryDropdown() {
-      if (categoryDropdown && categoryCell) {
-        const rect = categoryCell.getBoundingClientRect();
-        const scrollY = window.scrollY || window.pageYOffset;
-
-        categoryDropdown.style.position = 'absolute';
-        categoryDropdown.style.top = `${rect.bottom + scrollY}px`;
-        categoryDropdown.style.left = `${rect.left}px`;
-        categoryDropdown.style.width = `${rect.width}px`;
-        categoryDropdown.style.maxHeight = '200px'; // Limit the height of the dropdown
-
-        // Ensure the dropdown doesn't go off the bottom of the viewport
-        const viewportHeight = window.innerHeight;
-        const dropdownRect = categoryDropdown.getBoundingClientRect();
-        if (dropdownRect.bottom > viewportHeight) {
-          const overflowY = dropdownRect.bottom - viewportHeight;
-          categoryDropdown.style.maxHeight = `${200 - overflowY}px`;
-        }
-
-        categoryDropdown.style.display = 'block';
-        filterCategories(categoryCell.textContent.trim());
-      }
-    }
-
-    function closeCategoryDropdown() {
-      if (categoryDropdown) {
-        categoryDropdown.style.display = 'none';
-      }
-    }
-
-    function filterCategories(searchTerm) {
-      const categoryItems = categoryList.querySelectorAll('.category-item');
-      categoryItems.forEach((item) => {
-        const categoryName = item.querySelector('.category-name').textContent.toLowerCase();
-        const showCategory = categoryName.includes(searchTerm.toLowerCase());
-        item.style.display = showCategory ? 'block' : 'none';
-      });
-    }
-
-    if (categoryCell) {
-      categoryCell.addEventListener('click', (e) => {
-        e.preventDefault();
-        openCategoryDropdown();
-      });
-
-      categoryCell.addEventListener('input', (e) => {
-        filterCategories(e.target.textContent.trim());
-      });
-    }
-
-    if (categoryList) {
-      categoryList.addEventListener('click', (e) => {
-        const categoryItem = e.target.closest('.category-item');
-        if (categoryItem && categoryCell) {
-          const categoryName = categoryItem.querySelector('.category-name').textContent;
-          categoryCell.textContent = categoryName;
-          closeCategoryDropdown();
-        }
-      });
-    }
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!categoryDropdown.contains(e.target) && e.target !== categoryCell) {
-        closeCategoryDropdown();
-      }
-    });
 
     // Event Listeners
     if (coreTable) {
@@ -1144,6 +1130,10 @@ const productInstances = [
             loadProductData(product);
           }
         };
+      } else {
+        // If there's no productId, we're creating a new product
+        // Still call loadProductData to handle the category parameter
+        loadProductData({});
       }
 
       if (submitButton) {
