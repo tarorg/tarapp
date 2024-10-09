@@ -22,8 +22,10 @@ const returnUrl = Astro.url.searchParams.get('returnUrl') || '/prod';
     <div class="category-list">
       {categories.map((category) => (
         <div class="category-item">
-          <span class="category-name">{category.name}</span>
-          <span class="material-icons">chevron_right</span>
+          <div class="category-header">
+            <span class="category-name">{category.name}</span>
+            <span class="material-icons expand-icon">expand_more</span>
+          </div>
           <div class="subcategory-list">
             {category.subcategories.map((subcategory) => (
               <div class="subcategory-item" data-category={`${category.name} > ${subcategory}`}>
@@ -92,25 +94,33 @@ const returnUrl = Astro.url.searchParams.get('returnUrl') || '/prod';
   }
 
   .category-item {
-    padding: 1rem;
     border-bottom: 1px solid #f0f0f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
   }
 
   .category-item:last-child {
     border-bottom: none;
   }
 
+  .category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    cursor: pointer;
+  }
+
   .category-name {
     font-weight: 500;
+  }
+
+  .expand-icon {
+    transition: transform 0.3s ease;
   }
 
   .subcategory-list {
     display: none;
     padding-left: 1rem;
+    flex-direction: column;
   }
 
   .subcategory-item {
@@ -148,7 +158,7 @@ const returnUrl = Astro.url.searchParams.get('returnUrl') || '/prod';
           if (showSubItem) hasVisibleSubcategory = true;
         });
 
-        item.style.display = categoryName.includes(searchTerm.toLowerCase()) || hasVisibleSubcategory ? 'flex' : 'none';
+        item.style.display = categoryName.includes(searchTerm.toLowerCase()) || hasVisibleSubcategory ? 'block' : 'none';
       });
     }
 
@@ -157,20 +167,22 @@ const returnUrl = Astro.url.searchParams.get('returnUrl') || '/prod';
     });
 
     categoryList.addEventListener('click', (e) => {
-      const categoryItem = e.target.closest('.category-item');
+      const categoryHeader = e.target.closest('.category-header');
       const subcategoryItem = e.target.closest('.subcategory-item');
 
-      if (categoryItem && !subcategoryItem) {
+      if (categoryHeader) {
+        const categoryItem = categoryHeader.closest('.category-item');
         const subcategoryList = categoryItem.querySelector('.subcategory-list');
-        const isExpanded = subcategoryList.style.display === 'block';
-
-        // Close all other subcategory lists
-        document.querySelectorAll('.subcategory-list').forEach((list) => {
-          list.style.display = 'none';
-        });
-
-        // Toggle the clicked subcategory list
-        subcategoryList.style.display = isExpanded ? 'none' : 'block';
+        const expandIcon = categoryHeader.querySelector('.expand-icon');
+        
+        // Toggle the subcategory list
+        if (subcategoryList.style.display === 'flex') {
+          subcategoryList.style.display = 'none';
+          expandIcon.style.transform = 'rotate(0deg)';
+        } else {
+          subcategoryList.style.display = 'flex';
+          expandIcon.style.transform = 'rotate(180deg)';
+        }
       }
 
       if (subcategoryItem) {
