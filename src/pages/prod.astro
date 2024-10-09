@@ -8,21 +8,13 @@ let existingProduct = null;
 
 const productCore = {
   "Name": "",
-  "SKU": "",
   "Medias": "",
   "Qty": "",
   "Type": "Item",
   "Category": "",
-  "Description": "Notes on product",
   "Unit": "",
-  "Product Support": "Documents, URLs, Warranty",
-  "Analytics": "Product views, sales, conversion rates",
-  "Compliance": "Certifications",
-  "Localization": "Product languages",
-  "Sustainability": "Energy efficiency, renewable",
-  "Logistics": "Shipping carrier, shipping weight"
+  "Notes": ""
 };
-
 
 const variantAttributes = {
   color: "Red, Yellow, Green, Black",
@@ -711,6 +703,7 @@ const productInstances = [
   document.addEventListener('DOMContentLoaded', async () => {
     const productId = new URLSearchParams(window.location.search).get('id');
     const categoryParam = new URLSearchParams(window.location.search).get('category');
+    const unitParam = new URLSearchParams(window.location.search).get('unit');
     let db;
 
     // Move productInstances inside the DOMContentLoaded event listener
@@ -838,6 +831,14 @@ const productInstances = [
           categoryCell.textContent = categoryParam;
         }
       }
+
+      // Check if there's a unit parameter and update the unit cell
+      if (unitParam) {
+        const unitCell = document.querySelector('td[data-key="Unit"]:last-child');
+        if (unitCell) {
+          unitCell.textContent = unitParam;
+        }
+      }
     }
 
     async function saveProductData() {
@@ -913,8 +914,10 @@ const productInstances = [
           openTypeBottomSheet();
         } else if (key === 'Category') {
           e.preventDefault();
-          // Redirect to the new selectcategory page
           window.location.href = '/selectcategory?returnUrl=' + encodeURIComponent(window.location.href);
+        } else if (key === 'Unit') {
+          e.preventDefault();
+          window.location.href = '/selectunit?returnUrl=' + encodeURIComponent(window.location.href);
         } else if (cell.hasAttribute('contenteditable')) {
           cell.dataset.before = cell.textContent;
           cell.classList.add('cell-highlight');

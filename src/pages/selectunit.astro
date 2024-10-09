@@ -1,32 +1,32 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import categories from '../data/categories.json';
+import units from '../data/units.json';
 
 const returnUrl = Astro.url.searchParams.get('returnUrl') || '/prod';
 ---
 
-<Layout title="Select Category">
+<Layout title="Select Unit">
   <main>
     <div class="header">
-      <h1>Select Category</h1>
+      <h1>Select Unit</h1>
     </div>
     <div class="search-container">
       <div class="search-bar">
         <span class="material-icons">search</span>
-        <input type="text" id="categorySearchInput" placeholder="Search categories" class="search-input">
+        <input type="text" id="unitSearchInput" placeholder="Search units" class="search-input">
       </div>
     </div>
-    <div class="category-list">
-      {categories.map((category) => (
-        <div class="category-item">
-          <div class="category-header">
-            <span class="category-name">{category.name}</span>
+    <div class="unit-list">
+      {units.map((unitGroup) => (
+        <div class="unit-item">
+          <div class="unit-header">
+            <span class="unit-name">{unitGroup.name}</span>
             <span class="material-icons expand-icon">expand_more</span>
           </div>
-          <div class="subcategory-list">
-            {category.subcategories.map((subcategory) => (
-              <div class="subcategory-item" data-category={`${category.name} > ${subcategory}`}>
-                {subcategory}
+          <div class="subunit-list">
+            {unitGroup.units.map((unit) => (
+              <div class="subunit-item" data-unit={`${unitGroup.name} > ${unit}`}>
+                {unit}
               </div>
             ))}
           </div>
@@ -75,22 +75,22 @@ const returnUrl = Astro.url.searchParams.get('returnUrl') || '/prod';
     outline: none;
   }
 
-  .category-list {
+  .unit-list {
     background-color: white;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
-  .category-item {
+  .unit-item {
     border-bottom: 1px solid #f0f0f0;
   }
 
-  .category-item:last-child {
+  .unit-item:last-child {
     border-bottom: none;
   }
 
-  .category-header {
+  .unit-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -98,7 +98,7 @@ const returnUrl = Astro.url.searchParams.get('returnUrl') || '/prod';
     cursor: pointer;
   }
 
-  .category-name {
+  .unit-name {
     font-weight: 500;
   }
 
@@ -106,77 +106,77 @@ const returnUrl = Astro.url.searchParams.get('returnUrl') || '/prod';
     transition: transform 0.3s ease;
   }
 
-  .subcategory-list {
+  .subunit-list {
     display: none;
     padding-left: 1rem;
     flex-direction: column;
   }
 
-  .subcategory-item {
+  .subunit-item {
     padding: 0.75rem 1rem;
     border-top: 1px solid #f0f0f0;
     cursor: pointer;
   }
 
-  .subcategory-item:hover {
+  .subunit-item:hover {
     background-color: #f9f9f9;
   }
 </style>
 
 <script define:vars={{ returnUrl }}>
   document.addEventListener('DOMContentLoaded', () => {
-    const categoryList = document.querySelector('.category-list');
-    const categorySearchInput = document.getElementById('categorySearchInput');
+    const unitList = document.querySelector('.unit-list');
+    const unitSearchInput = document.getElementById('unitSearchInput');
 
-    function filterCategories(searchTerm) {
-      const items = categoryList.querySelectorAll('.category-item');
+    function filterUnits(searchTerm) {
+      const items = unitList.querySelectorAll('.unit-item');
       items.forEach((item) => {
-        const categoryName = item.querySelector('.category-name').textContent.toLowerCase();
-        const subcategories = item.querySelectorAll('.subcategory-item');
-        let hasVisibleSubcategory = false;
+        const unitName = item.querySelector('.unit-name').textContent.toLowerCase();
+        const subunits = item.querySelectorAll('.subunit-item');
+        let hasVisibleSubunit = false;
 
-        subcategories.forEach((subItem) => {
+        subunits.forEach((subItem) => {
           const subName = subItem.textContent.toLowerCase();
           const showSubItem = subName.includes(searchTerm.toLowerCase());
           subItem.style.display = showSubItem ? 'block' : 'none';
-          if (showSubItem) hasVisibleSubcategory = true;
+          if (showSubItem) hasVisibleSubunit = true;
         });
 
-        item.style.display = categoryName.includes(searchTerm.toLowerCase()) || hasVisibleSubcategory ? 'block' : 'none';
+        item.style.display = unitName.includes(searchTerm.toLowerCase()) || hasVisibleSubunit ? 'block' : 'none';
       });
     }
 
-    categorySearchInput.addEventListener('input', (e) => {
-      filterCategories(e.target.value.trim());
+    unitSearchInput.addEventListener('input', (e) => {
+      filterUnits(e.target.value.trim());
     });
 
-    categoryList.addEventListener('click', (e) => {
-      const categoryHeader = e.target.closest('.category-header');
-      const subcategoryItem = e.target.closest('.subcategory-item');
+    unitList.addEventListener('click', (e) => {
+      const unitHeader = e.target.closest('.unit-header');
+      const subunitItem = e.target.closest('.subunit-item');
 
-      if (categoryHeader) {
-        const categoryItem = categoryHeader.closest('.category-item');
-        const subcategoryList = categoryItem.querySelector('.subcategory-list');
-        const expandIcon = categoryHeader.querySelector('.expand-icon');
+      if (unitHeader) {
+        const unitItem = unitHeader.closest('.unit-item');
+        const subunitList = unitItem.querySelector('.subunit-list');
+        const expandIcon = unitHeader.querySelector('.expand-icon');
         
-        // Toggle the subcategory list
-        if (subcategoryList.style.display === 'flex') {
-          subcategoryList.style.display = 'none';
+        // Toggle the subunit list
+        if (subunitList.style.display === 'flex') {
+          subunitList.style.display = 'none';
           expandIcon.style.transform = 'rotate(0deg)';
         } else {
-          subcategoryList.style.display = 'flex';
+          subunitList.style.display = 'flex';
           expandIcon.style.transform = 'rotate(180deg)';
         }
       }
 
-      if (subcategoryItem) {
-        const selectedCategory = subcategoryItem.dataset.category;
+      if (subunitItem) {
+        const selectedUnit = subunitItem.dataset.unit;
         const urlParams = new URLSearchParams(window.location.search);
         const returnUrl = urlParams.get('returnUrl') || '/prod';
 
-        // Append the selected category to the return URL
+        // Append the selected unit to the return URL
         const updatedReturnUrl = new URL(returnUrl, window.location.origin);
-        updatedReturnUrl.searchParams.set('category', selectedCategory);
+        updatedReturnUrl.searchParams.set('unit', selectedUnit);
 
         window.location.href = updatedReturnUrl.toString();
       }
