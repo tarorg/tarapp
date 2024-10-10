@@ -1,6 +1,5 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import Menu from '../../components/Menu.astro';
 import categories from '../../data/categories.json';
 
 const productId = Astro.url.searchParams.get('id');
@@ -20,11 +19,14 @@ const productInstances = [];
 ---
 
 <Layout title="Product">
-  <Menu />
-  <main style="max-width: 1200px; margin: 0 auto; padding: 1rem 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h1 style="font-size: 20px; font-weight: bold;">{productId ? 'Edit Product' : 'Product'}</h1>
-      <button id="submitButton" class="button-tonal" style="border-radius: 5px;">Submit</button>
+  <main style="width: 100%; padding: 1rem 20px;">
+    <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 1rem;">
+      <button id="closeButton" class="icon-button" aria-label="Close">
+        <span class="material-icons">close</span>
+      </button>
+      <button id="submitButton" class="icon-button" aria-label="Submit">
+        <span class="material-icons">check</span>
+      </button>
     </div>
 
     <!-- Core Table -->
@@ -95,10 +97,11 @@ const productInstances = [];
     border-bottom: 1px solid #e5e7eb;
     cursor: pointer;
     margin-bottom: 0;
+    background-color: #f9f9f9; /* Very light grey-white background */
   }
 
   .table-title:hover {
-    background-color: #f9f9f9;
+    background-color: #f5f5f5; /* Slightly darker on hover for feedback */
   }
 
   .data-table {
@@ -109,6 +112,7 @@ const productInstances = [];
 
   .data-table tr {
     position: relative;
+    height: 48px; /* Set a consistent height for all rows */
   }
 
   .data-table tr::after {
@@ -126,12 +130,14 @@ const productInstances = [];
   }
 
   .data-table tr.first-row td {
-    padding-top: 0.5rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
   }
 
   .key-cell, .value-cell {
     padding: 0.75rem 1rem;
     position: relative;
+    vertical-align: middle; /* Align content vertically */
   }
 
   .key-cell {
@@ -169,24 +175,29 @@ const productInstances = [];
     box-shadow: none;
   }
 
-  .button-tonal {
-    background-color: #FFFFFF;
-    color: #1D192B;
-    border: 1px solid #79747E;
-    padding: 10px 24px;
-    font-size: 14px;
-    font-weight: 500;
-    border-radius: 20px;
+  .icon-button {
+    background-color: white;
+    border: 1px solid #e0e0e0;
     cursor: pointer;
-    transition: background-color 0.2s;
+    padding: 8px;
+    border-radius: 5px;
+    transition: background-color 0.2s, border-color 0.2s;
+    margin-left: 8px;
   }
 
-  .button-tonal:hover {
-    background-color: #F4EFF4;
+  .icon-button:hover {
+    background-color: #f5f5f5;
+    border-color: #d0d0d0;
   }
 
-  .button-tonal:active {
-    background-color: #E8DEF8;
+  .icon-button:active {
+    background-color: #e8e8e8;
+    border-color: #c0c0c0;
+  }
+
+  .icon-button .material-icons {
+    font-size: 24px;
+    color: #1D192B;
   }
 
   .thumbnail {
@@ -197,6 +208,11 @@ const productInstances = [];
     flex-shrink: 0;
     border: 1px solid #e0e0e0;
   }
+
+  main {
+    max-width: none;
+    margin: 0;
+  }
 </style>
 
 <script define:vars={{ categories, productId, selectedCategory }}>
@@ -205,6 +221,7 @@ const productInstances = [];
     const attributesTable = document.getElementById('attributesTable');
     const instancesTable = document.getElementById('instancesTable');
     const submitButton = document.getElementById('submitButton');
+    const closeButton = document.getElementById('closeButton');
     const typeValue = document.getElementById('typeValue');
     const mediaGrid = document.getElementById('mediaGrid');
     const attributesTitle = document.getElementById('attributesTitle');
@@ -338,6 +355,14 @@ const productInstances = [];
 
         // Save data to IndexedDB
         saveToIndexedDB(coreData, attributesData, instancesData);
+      });
+    }
+
+    if (closeButton) {
+      closeButton.addEventListener('click', () => {
+        // Add logic to handle closing the product page
+        // For example, you could redirect to the product list page:
+        window.location.href = '/products/allproducts';
       });
     }
 

@@ -19,13 +19,14 @@ const instanceFields = {
 ---
 
 <Layout title="Add Instance">
-  <main style="max-width: 600px; margin: 0 auto; padding: 1rem;">
+  <main>
     <div class="header">
-      <h1 style="font-size: 20px; font-weight: bold;">Add Instance</h1>
-      <div class="button-group">
-        <button id="cancelButton" class="header-button">Cancel</button>
-        <button id="addButton" class="header-button">Add</button>
-      </div>
+      <button id="cancelButton" class="icon-button" aria-label="Cancel">
+        <span class="material-icons">close</span>
+      </button>
+      <button id="addButton" class="icon-button" aria-label="Add">
+        <span class="material-icons">check</span>
+      </button>
     </div>
 
     <div class="table-container">
@@ -44,38 +45,27 @@ const instanceFields = {
 </Layout>
 
 <style>
+  main {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    padding: 1rem;
+    box-sizing: border-box;
+  }
+
   .header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    justify-content: flex-end;
     margin-bottom: 1rem;
   }
 
-  .button-group {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .header-button {
-    padding: 0.5rem 1rem;
-    font-size: 14px;
-    cursor: pointer;
-    background-color: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    color: #333;
-  }
-
-  .header-button:hover {
-    background-color: #f5f5f5;
-  }
-
   .table-container {
+    flex-grow: 1;
+    overflow-y: auto;
     background-color: white;
     border-radius: 0.5rem;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-    margin-bottom: 2rem;
-    overflow: hidden;
   }
 
   .data-table {
@@ -86,6 +76,7 @@ const instanceFields = {
 
   .data-table tr {
     position: relative;
+    height: 48px;
   }
 
   .data-table tr::after {
@@ -103,12 +94,14 @@ const instanceFields = {
   }
 
   .data-table tr.first-row td {
-    padding-top: 0.5rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
   }
 
   .key-cell, .value-cell {
     padding: 0.75rem 1rem;
     position: relative;
+    vertical-align: middle;
   }
 
   .key-cell {
@@ -124,6 +117,31 @@ const instanceFields = {
   [contenteditable="true"]:focus {
     outline: none;
     background-color: #f5f5f5;
+  }
+
+  .icon-button {
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 5px;
+    transition: background-color 0.2s, border-color 0.2s;
+    margin-left: 8px;
+  }
+
+  .icon-button:hover {
+    background-color: #f5f5f5;
+    border-color: #d0d0d0;
+  }
+
+  .icon-button:active {
+    background-color: #e8e8e8;
+    border-color: #c0c0c0;
+  }
+
+  .icon-button .material-icons {
+    font-size: 24px;
+    color: #1D192B;
   }
 </style>
 
