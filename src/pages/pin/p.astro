@@ -74,6 +74,45 @@ import categories from './cat.json';
         .category-option:hover {
             background-color: #f0f0f0;
         }
+        .media-cell {
+            position: relative;
+        }
+        .media-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .media-item {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f8f8;
+        }
+        .media-item img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+        .media-item span {
+            font-size: 20px;
+            line-height: 32px;
+        }
+        .media-upload {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .media-upload input {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -102,6 +141,16 @@ import categories from './cat.json';
                             <div class="category-option" data-value={category}>{category}</div>
                         ))}
                     </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="property">Medias</td>
+                <td class="value media-cell">
+                    <div class="media-preview"></div>
+                    <label class="media-upload">
+                        <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
+                        Add a file or image
+                    </label>
                 </td>
             </tr>
         </tbody>
@@ -188,6 +237,55 @@ import categories from './cat.json';
                 // Here you can add code to save the changes, e.g., send to a server
             });
         });
+
+        // Media upload functionality
+        const mediaInput = document.querySelector('.media-upload input') as HTMLInputElement;
+        const mediaPreview = document.querySelector('.media-preview') as HTMLElement;
+
+        mediaInput.addEventListener('change', (event) => {
+            const files = (event.target as HTMLInputElement).files;
+            if (files) {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const reader = new FileReader();
+
+                    reader.onload = (e) => {
+                        const mediaItem = document.createElement('div');
+                        mediaItem.className = 'media-item';
+                        mediaItem.style.width = '32px';
+                        mediaItem.style.height = '32px';
+
+                        if (file.type.startsWith('image/')) {
+                            const img = document.createElement('img');
+                            img.src = e.target?.result as string;
+                            img.alt = file.name;
+                            img.style.width = '32px';
+                            img.style.height = '32px';
+                            mediaItem.appendChild(img);
+                        } else {
+                            const fileIcon = document.createElement('span');
+                            fileIcon.textContent = getFileIcon(file.type);
+                            mediaItem.appendChild(fileIcon);
+                        }
+
+                        mediaPreview.appendChild(mediaItem);
+                    };
+
+                    reader.readAsDataURL(file);
+                }
+
+                console.log(`Medias updated: ${files.length} file(s) added`);
+                // Here you can add code to save the changes, e.g., send to a server
+            }
+        });
+
+        // Add this function to determine the appropriate icon
+        function getFileIcon(fileType: string): string {
+            if (fileType.includes('pdf')) return '📄';
+            if (fileType.includes('doc')) return '📝';
+            if (fileType.includes('xls')) return '📊';
+            return '📁'; // default icon for other file types
+        }
     </script>
 </body>
 </html>
