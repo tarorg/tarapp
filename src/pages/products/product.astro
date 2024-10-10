@@ -11,7 +11,8 @@ const productCore = {
   "Medias": "",
   "Type": "Item",
   "Category": selectedCategory || "",
-  "Notes": ""
+  "Notes": "",
+  "Attributes": {} // Add Attributes to the core structure
 };
 
 const productAttributes = [];
@@ -50,6 +51,10 @@ const productInstances = [];
                 </td>
               ) : key === "Category" ? (
                 <td class="value-cell" data-key={key}>{value}</td>
+              ) : key === "Attributes" ? (
+                <td class="value-cell" data-key={key}>
+                  <!-- Attributes will be inserted here by JavaScript -->
+                </td>
               ) : (
                 <td class="value-cell" contenteditable="true" data-key={key}>{value}</td>
               )}
@@ -213,6 +218,14 @@ const productInstances = [];
     max-width: none;
     margin: 0;
   }
+
+  .attribute-group {
+    margin-bottom: 0.5rem;
+  }
+
+  .attribute-group strong {
+    font-weight: 500;
+  }
 </style>
 
 <script define:vars={{ categories, productId, selectedCategory }}>
@@ -229,6 +242,49 @@ const productInstances = [];
 
     const typeOptions = ['Item', 'Variants', 'Service'];
     let currentTypeIndex = 0;
+
+    // Load current product from local storage
+    const currentProduct = JSON.parse(localStorage.getItem('currentProduct')) || {};
+
+    // Function to update core table with current product data
+    function updateCoreTable() {
+      coreTable.querySelectorAll('td[data-key]').forEach(cell => {
+        const key = cell.dataset.key;
+        if (key === 'Medias') {
+          // Clear existing media
+          mediaGrid.innerHTML = '';
+          if (currentProduct[key]) {
+            currentProduct[key].split(',').forEach(mediaUrl => {
+              addMediaThumbnail(mediaUrl.trim());
+            });
+          }
+        } else if (key === 'Type') {
+          typeValue.textContent = currentProduct[key] || 'Item';
+          currentTypeIndex = typeOptions.indexOf(currentProduct[key] || 'Item');
+        } else if (key === 'Attributes') {
+          updateAttributesInCoreTable(currentProduct[key] || {});
+        } else {
+          cell.textContent = currentProduct[key] || '';
+        }
+      });
+    }
+
+    // Function to update attributes in the core table
+    function updateAttributesInCoreTable(attributes) {
+      const attributesCell = coreTable.querySelector('td[data-key="Attributes"]');
+      attributesCell.innerHTML = '';
+      Object.entries(attributes).forEach(([group, values]) => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'attribute-group';
+        groupDiv.innerHTML = `
+          <strong>${group}:</strong> ${values.join(', ')}
+        `;
+        attributesCell.appendChild(groupDiv);
+      });
+    }
+
+    // Initial update of core table
+    updateCoreTable();
 
     // Function to add media thumbnail
     function addMediaThumbnail(mediaUrl) {
@@ -264,7 +320,20 @@ const productInstances = [];
           } else if (key === 'Type') {
             currentTypeIndex = (currentTypeIndex + 1) % typeOptions.length;
             typeValue.textContent = typeOptions[currentTypeIndex];
+            currentProduct[key] = typeOptions[currentTypeIndex];
+            localStorage.setItem('currentProduct', JSON.stringify(currentProduct));
+          } else if (key === 'Attributes') {
+            window.location.href = '/products/attributes?returnUrl=' + encodeURIComponent(window.location.href);
           }
+        }
+      });
+
+      coreTable.addEventListener('input', (e) => {
+        const cell = e.target.closest('td[data-key]');
+        if (cell) {
+          const key = cell.dataset.key;
+          currentProduct[key] = cell.textContent;
+          localStorage.setItem('currentProduct', JSON.stringify(currentProduct));
         }
       });
     }
@@ -291,15 +360,9 @@ const productInstances = [];
     const selectedAttributes = urlParams.get('selectedAttributes');
     if (selectedAttributes) {
       const attributes = JSON.parse(selectedAttributes);
-      Object.entries(attributes).forEach(([group, values], index) => {
-        const row = document.createElement('tr');
-        row.className = index === 0 ? 'first-row' : '';
-        row.innerHTML = `
-          <td class="key-cell">${group}</td>
-          <td class="value-cell" contenteditable="true">${values.join(', ')}</td>
-        `;
-        attributesTable.querySelector('tbody').appendChild(row);
-      });
+      currentProduct.Attributes = attributes;
+      updateAttributesInCoreTable(attributes);
+      localStorage.setItem('currentProduct', JSON.stringify(currentProduct));
       urlParams.delete('selectedAttributes');
       const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
       window.history.replaceState({}, '', newUrl);
@@ -321,53 +384,8 @@ const productInstances = [];
       window.history.replaceState({}, '', newUrl);
     }
 
-    if (submitButton) {
-      submitButton.addEventListener('click', () => {
-        // Collect data from core table
-        const coreData = {};
-        coreTable.querySelectorAll('td[data-key]').forEach(cell => {
-          const key = cell.dataset.key;
-          if (key === 'Medias') {
-            coreData[key] = Array.from(cell.querySelectorAll('.thumbnail')).map(img => img.src);
-          } else if (key === 'Type') {
-            coreData[key] = typeValue.textContent;
-          } else {
-            coreData[key] = cell.textContent;
-          }
-        });
-
-        // Collect data from attributes table
-        const attributesData = {};
-        attributesTable.querySelectorAll('tr').forEach(row => {
-          const cells = row.querySelectorAll('td');
-          attributesData[cells[0].textContent] = cells[1].textContent.split(',').map(v => v.trim());
-        });
-
-        // Collect data from instances table
-        const instancesData = [];
-        instancesTable.querySelectorAll('tr').forEach(row => {
-          const cells = row.querySelectorAll('td');
-          instancesData.push({
-            type: cells[0].textContent,
-            value: cells[1].textContent
-          });
-        });
-
-        // Save data to IndexedDB
-        saveToIndexedDB(coreData, attributesData, instancesData);
-      });
-    }
-
-    if (closeButton) {
-      closeButton.addEventListener('click', () => {
-        // Add logic to handle closing the product page
-        // For example, you could redirect to the product list page:
-        window.location.href = '/products/allproducts';
-      });
-    }
-
     // Function to save data to IndexedDB
-    async function saveToIndexedDB(coreData, attributesData, instancesData) {
+    async function saveToIndexedDB(coreData) {
       const dbName = 'productDB';
       const dbVersion = 1;
 
@@ -379,23 +397,17 @@ const productInstances = [];
 
       request.onsuccess = (event) => {
         const db = event.target.result;
-        const transaction = db.transaction(['core', 'instances'], 'readwrite');
+        const transaction = db.transaction(['core'], 'readwrite');
 
         const coreStore = transaction.objectStore('core');
-        const instancesStore = transaction.objectStore('instances');
 
-        // Save core and attributes data
-        const coreRecord = { ...coreData, attributes: attributesData };
-        coreStore.put(coreRecord);
-
-        // Save instances data
-        instancesData.forEach(instance => {
-          instancesStore.add(instance);
-        });
+        // Save core data (including attributes)
+        coreStore.put(coreData);
 
         transaction.oncomplete = () => {
           console.log("Data saved successfully");
           // Redirect to product list or show success message
+          window.location.href = '/products/allproducts';
         };
 
         transaction.onerror = (event) => {
@@ -406,8 +418,83 @@ const productInstances = [];
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
         db.createObjectStore('core', { keyPath: 'id', autoIncrement: true });
-        db.createObjectStore('instances', { keyPath: 'id', autoIncrement: true });
       };
+    }
+
+    // Function to load data from IndexedDB
+    async function loadFromIndexedDB() {
+      return new Promise((resolve, reject) => {
+        const dbName = 'productDB';
+        const dbVersion = 1;
+
+        const request = indexedDB.open(dbName, dbVersion);
+
+        request.onerror = (event) => {
+          console.error("IndexedDB error:", event.target.error);
+          reject(event.target.error);
+        };
+
+        request.onsuccess = (event) => {
+          const db = event.target.result;
+          const transaction = db.transaction(['core'], 'readonly');
+
+          const coreStore = transaction.objectStore('core');
+
+          const data = {
+            core: null
+          };
+
+          coreStore.getAll().onsuccess = (event) => {
+            data.core = event.target.result[0] || {};
+          };
+
+          transaction.oncomplete = () => {
+            resolve(data);
+          };
+        };
+      });
+    }
+
+    // Load existing data when the page loads
+    const existingData = await loadFromIndexedDB();
+    
+    // Update UI with existing data
+    if (existingData.core) {
+      Object.assign(currentProduct, existingData.core);
+      updateCoreTable();
+    }
+
+    if (submitButton) {
+      submitButton.addEventListener('click', () => {
+        // Collect data from core table
+        const coreData = {};
+        coreTable.querySelectorAll('td[data-key]').forEach(cell => {
+          const key = cell.dataset.key;
+          if (key === 'Medias') {
+            coreData[key] = Array.from(cell.querySelectorAll('.thumbnail')).map(img => img.src).join(', ');
+          } else if (key === 'Type') {
+            coreData[key] = typeValue.textContent;
+          } else if (key === 'Attributes') {
+            coreData[key] = currentProduct.Attributes || {};
+          } else {
+            coreData[key] = cell.textContent;
+          }
+        });
+
+        // Save data to IndexedDB
+        saveToIndexedDB(coreData);
+
+        // Clear currentProduct from local storage
+        localStorage.removeItem('currentProduct');
+      });
+    }
+
+    if (closeButton) {
+      closeButton.addEventListener('click', () => {
+        // Clear currentProduct from local storage
+        localStorage.removeItem('currentProduct');
+        window.location.href = '/products/allproducts';
+      });
     }
   });
 </script>

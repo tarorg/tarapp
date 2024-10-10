@@ -746,6 +746,30 @@ const productInstances = [
 
     let currentMediaIndex = -1;
 
+    let currentProduct = null;
+
+    // Function to create a new product record
+    function createNewProduct() {
+      currentProduct = {
+        id: Date.now().toString(),
+        Name: "",
+        Medias: [],
+        Type: "Item",
+        Category: "",
+        Notes: ""
+      };
+      localStorage.setItem('currentProduct', JSON.stringify(currentProduct));
+      loadProductData(currentProduct);
+    }
+
+    // Function to update currentProduct and local storage
+    function updateCurrentProduct(key, value) {
+      if (currentProduct) {
+        currentProduct[key] = value;
+        localStorage.setItem('currentProduct', JSON.stringify(currentProduct));
+      }
+    }
+
     function updatePageState(newState) {
       pageState = { ...pageState, ...newState };
       localStorage.setItem('productType', pageState.type);
@@ -797,6 +821,9 @@ const productInstances = [
 
     async function loadProductData(product) {
       console.log('Loading product data:', product);
+      currentProduct = product;
+      localStorage.setItem('currentProduct', JSON.stringify(currentProduct));
+
       const coreTable = document.getElementById('coreTable');
       if (coreTable) {
         coreTable.dataset.productId = product.id || '';
@@ -843,7 +870,7 @@ const productInstances = [
     }
 
     async function saveProductData() {
-      const productData = {};
+      const productData = currentProduct || {};
       const cells = coreTable.querySelectorAll('td[data-key]');
       cells.forEach(cell => {
         const key = cell.dataset.key;
@@ -854,14 +881,14 @@ const productInstances = [
         }
       });
 
-      // Use the existing productId if available, otherwise generate a new one
-      productData.id = productId || Date.now().toString();
-
       try {
         const transaction = db.transaction(['core'], 'readwrite');
         const coreStore = transaction.objectStore('core');
         await coreStore.put(productData);
         console.log('Product data saved successfully');
+        
+        // Clear currentProduct from local storage
+        localStorage.removeItem('currentProduct');
         
         // Redirect to the products page after saving
         window.location.href = '/products/products';
@@ -939,6 +966,7 @@ const productInstances = [
 
         if (newValue !== oldValue) {
           handleValueChange(cell, newValue);
+          updateCurrentProduct(cell.dataset.key, newValue);
         }
       }
     }
@@ -1124,6 +1152,12 @@ const productInstances = [
       }
     }
 
+    // Add event listener for FAB click
+    const fab = document.querySelector('.fab'); // Make sure to add a class 'fab' to your Floating Action Button
+    if (fab) {
+      fab.addEventListener('click', createNewProduct);
+    }
+
     try {
       db = await openDB();
       
@@ -1150,8 +1184,14 @@ const productInstances = [
           loadProductData({}); // Load empty product data
         };
       } else {
-        // If there's no productId, we're creating a new product
-        loadProductData({});
+        // Check if there's a currentProduct in local storage
+        const storedProduct = localStorage.getItem('currentProduct');
+        if (storedProduct) {
+          loadProductData(JSON.parse(storedProduct));
+        } else {
+          // If there's no productId and no stored product, we're creating a new product
+          createNewProduct();
+        }
       }
 
       if (submitButton) {
