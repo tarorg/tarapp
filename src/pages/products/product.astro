@@ -4,15 +4,19 @@ import Menu from '../../components/Menu.astro';
 import categories from '../../data/categories.json';
 
 const productId = Astro.url.searchParams.get('id');
+const selectedCategory = Astro.url.searchParams.get('selectedCategory');
 let existingProduct = null;
 
 const productCore = {
   "Name": "",
   "Medias": "",
   "Type": "Item",
-  "Category": "",
+  "Category": selectedCategory || "",
   "Notes": ""
 };
+
+const productAttributes = [];
+const productInstances = [];
 ---
 
 <Layout title="Product">
@@ -22,30 +26,53 @@ const productCore = {
       <h1 style="font-size: 20px; font-weight: bold;">{productId ? 'Edit Product' : 'Product'}</h1>
       <button id="submitButton" class="button-tonal" style="border-radius: 5px;">Submit</button>
     </div>
-    <div style="background-color: white; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); margin-bottom: 2rem; overflow: hidden;">
-      <table id="coreTable" style="width: 100%; border-collapse: collapse;">
+
+    <!-- Core Table -->
+    <div class="table-container">
+      <h2 class="table-title">Core</h2>
+      <table id="coreTable" class="data-table">
         <tbody>
           {Object.entries(productCore).map(([key, value], index) => (
-            <tr style={index !== Object.entries(productCore).length - 1 ? "border-bottom: 1px solid #e5e7eb;" : ""}>
-              <td style={`padding: 0.75rem 1rem; font-weight: 500; width: 30%; ${key === "Medias" || key === "Type" || key === "Category" ? "cursor: pointer;" : ""}`} data-key={key}>{key}</td>
+            <tr class={index === 0 ? "first-row" : ""}>
+              <td class="key-cell">{key}</td>
               {key === "Medias" ? (
-                <td style="padding: 0.75rem 1rem;" data-key={key}>
-                  <div id="mediaGrid" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                <td class="value-cell" data-key={key}>
+                  <div id="mediaGrid" class="media-grid">
                     <!-- Media thumbnails will be inserted here by JavaScript -->
                   </div>
                 </td>
               ) : key === "Type" ? (
-                <td style="padding: 0.75rem 1rem; width: 70%; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" data-key={key}>
-                  <span id="typeValue" style="flex-grow: 1; margin-right: 8px;">Item</span>
-                  <span class="material-icons" style="font-size: 18px; flex-shrink: 0;">chevron_right</span>
+                <td class="value-cell type-cell" data-key={key}>
+                  <span id="typeValue">Item</span>
+                  <span class="material-icons">chevron_right</span>
                 </td>
               ) : key === "Category" ? (
-                <td style="padding: 0.75rem 1rem; width: 70%;" data-key={key}></td>
+                <td class="value-cell" data-key={key}>{value}</td>
               ) : (
-                <td style="padding: 0.75rem 1rem; width: 70%;" contenteditable="true" data-key={key}></td>
+                <td class="value-cell" contenteditable="true" data-key={key}>{value}</td>
               )}
             </tr>
           ))}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Attributes Table -->
+    <div class="table-container">
+      <h2 class="table-title" id="attributesTitle">Attributes</h2>
+      <table id="attributesTable" class="data-table">
+        <tbody>
+          <!-- Attribute rows will be inserted here by JavaScript -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Instances Table -->
+    <div class="table-container">
+      <h2 class="table-title" id="instancesTitle">Instances</h2>
+      <table id="instancesTable" class="data-table">
+        <tbody>
+          <!-- Instance rows will be inserted here by JavaScript -->
         </tbody>
       </table>
     </div>
@@ -53,6 +80,84 @@ const productCore = {
 </Layout>
 
 <style>
+  .table-container {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+
+  .table-title {
+    font-size: 18px;
+    font-weight: bold;
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    cursor: pointer;
+    margin-bottom: 0;
+  }
+
+  .table-title:hover {
+    background-color: #f9f9f9;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .data-table tr {
+    position: relative;
+  }
+
+  .data-table tr::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background-color: #e5e7eb;
+  }
+
+  .data-table tr:last-child::after {
+    display: none;
+  }
+
+  .data-table tr.first-row td {
+    padding-top: 0.5rem;
+  }
+
+  .key-cell, .value-cell {
+    padding: 0.75rem 1rem;
+    position: relative;
+  }
+
+  .key-cell {
+    font-weight: 500;
+    width: 30%;
+    border-right: 1px solid #e5e7eb;
+  }
+
+  .value-cell {
+    width: 70%;
+  }
+
+  .type-cell {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .media-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+  }
+
   .cell-highlight {
     background-color: #f5f5f5;
     outline: none;
@@ -94,13 +199,16 @@ const productCore = {
   }
 </style>
 
-<script define:vars={{ categories, productId }}>
+<script define:vars={{ categories, productId, selectedCategory }}>
   document.addEventListener('DOMContentLoaded', async () => {
     const coreTable = document.getElementById('coreTable');
+    const attributesTable = document.getElementById('attributesTable');
+    const instancesTable = document.getElementById('instancesTable');
     const submitButton = document.getElementById('submitButton');
-    const typeCell = document.querySelector('td[data-key="Type"]');
     const typeValue = document.getElementById('typeValue');
     const mediaGrid = document.getElementById('mediaGrid');
+    const attributesTitle = document.getElementById('attributesTitle');
+    const instancesTitle = document.getElementById('instancesTitle');
 
     const typeOptions = ['Item', 'Variants', 'Service'];
     let currentTypeIndex = 0;
@@ -119,31 +227,15 @@ const productCore = {
     const selectedMedia = urlParams.getAll('selectedMedia');
     if (selectedMedia.length > 0) {
       selectedMedia.forEach(mediaId => {
-        // In a real application, you'd fetch the actual media URL based on the ID
-        // For this example, we'll use a placeholder
         addMediaThumbnail(`https://via.placeholder.com/150?text=Media${mediaId}`);
       });
-      // Clear the selectedMedia from the URL to prevent duplicates on page refresh
       urlParams.delete('selectedMedia');
       const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
       window.history.replaceState({}, '', newUrl);
     }
 
+    // Handle core table interactions
     if (coreTable) {
-      coreTable.addEventListener('focus', (e) => {
-        const cell = e.target.closest('td[contenteditable]');
-        if (cell) {
-          cell.classList.add('cell-highlight');
-        }
-      }, true);
-
-      coreTable.addEventListener('blur', (e) => {
-        const cell = e.target.closest('td[contenteditable]');
-        if (cell) {
-          cell.classList.remove('cell-highlight');
-        }
-      }, true);
-
       coreTable.addEventListener('click', (e) => {
         const cell = e.target.closest('td[data-key]');
         if (cell) {
@@ -160,10 +252,137 @@ const productCore = {
       });
     }
 
+    // Check for selected category
+    if (selectedCategory) {
+      const categoryCell = coreTable.querySelector('td[data-key="Category"]');
+      if (categoryCell) {
+        categoryCell.textContent = selectedCategory;
+      }
+    }
+
+    // Handle adding attributes
+    attributesTitle.addEventListener('click', () => {
+      window.location.href = '/products/attributes?returnUrl=' + encodeURIComponent(window.location.href);
+    });
+
+    // Handle adding instances
+    instancesTitle.addEventListener('click', () => {
+      window.location.href = '/products/instance?returnUrl=' + encodeURIComponent(window.location.href);
+    });
+
+    // Check for selected attributes
+    const selectedAttributes = urlParams.get('selectedAttributes');
+    if (selectedAttributes) {
+      const attributes = JSON.parse(selectedAttributes);
+      Object.entries(attributes).forEach(([group, values], index) => {
+        const row = document.createElement('tr');
+        row.className = index === 0 ? 'first-row' : '';
+        row.innerHTML = `
+          <td class="key-cell">${group}</td>
+          <td class="value-cell" contenteditable="true">${values.join(', ')}</td>
+        `;
+        attributesTable.querySelector('tbody').appendChild(row);
+      });
+      urlParams.delete('selectedAttributes');
+      const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+      window.history.replaceState({}, '', newUrl);
+    }
+
+    // Check for new instance
+    const newInstance = urlParams.get('newInstance');
+    if (newInstance) {
+      const instance = JSON.parse(newInstance);
+      const row = document.createElement('tr');
+      row.className = instancesTable.querySelector('tbody').children.length === 0 ? 'first-row' : '';
+      row.innerHTML = `
+        <td class="key-cell">${instance.type}</td>
+        <td class="value-cell" contenteditable="true">${instance.value}</td>
+      `;
+      instancesTable.querySelector('tbody').appendChild(row);
+      urlParams.delete('newInstance');
+      const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+      window.history.replaceState({}, '', newUrl);
+    }
+
     if (submitButton) {
       submitButton.addEventListener('click', () => {
-        // Handle form submission (functionality to be implemented)
+        // Collect data from core table
+        const coreData = {};
+        coreTable.querySelectorAll('td[data-key]').forEach(cell => {
+          const key = cell.dataset.key;
+          if (key === 'Medias') {
+            coreData[key] = Array.from(cell.querySelectorAll('.thumbnail')).map(img => img.src);
+          } else if (key === 'Type') {
+            coreData[key] = typeValue.textContent;
+          } else {
+            coreData[key] = cell.textContent;
+          }
+        });
+
+        // Collect data from attributes table
+        const attributesData = {};
+        attributesTable.querySelectorAll('tr').forEach(row => {
+          const cells = row.querySelectorAll('td');
+          attributesData[cells[0].textContent] = cells[1].textContent.split(',').map(v => v.trim());
+        });
+
+        // Collect data from instances table
+        const instancesData = [];
+        instancesTable.querySelectorAll('tr').forEach(row => {
+          const cells = row.querySelectorAll('td');
+          instancesData.push({
+            type: cells[0].textContent,
+            value: cells[1].textContent
+          });
+        });
+
+        // Save data to IndexedDB
+        saveToIndexedDB(coreData, attributesData, instancesData);
       });
+    }
+
+    // Function to save data to IndexedDB
+    async function saveToIndexedDB(coreData, attributesData, instancesData) {
+      const dbName = 'productDB';
+      const dbVersion = 1;
+
+      const request = indexedDB.open(dbName, dbVersion);
+
+      request.onerror = (event) => {
+        console.error("IndexedDB error:", event.target.error);
+      };
+
+      request.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction(['core', 'instances'], 'readwrite');
+
+        const coreStore = transaction.objectStore('core');
+        const instancesStore = transaction.objectStore('instances');
+
+        // Save core and attributes data
+        const coreRecord = { ...coreData, attributes: attributesData };
+        coreStore.put(coreRecord);
+
+        // Save instances data
+        instancesData.forEach(instance => {
+          instancesStore.add(instance);
+        });
+
+        transaction.oncomplete = () => {
+          console.log("Data saved successfully");
+          // Redirect to product list or show success message
+        };
+
+        transaction.onerror = (event) => {
+          console.error("Transaction error:", event.target.error);
+        };
+      };
+
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        db.createObjectStore('core', { keyPath: 'id', autoIncrement: true });
+        db.createObjectStore('instances', { keyPath: 'id', autoIncrement: true });
+      };
     }
   });
 </script>

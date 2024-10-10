@@ -1,0 +1,132 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const returnUrl = Astro.url.searchParams.get('returnUrl') || '/products/product';
+---
+
+<Layout title="Add Instance">
+  <main>
+    <div class="header">
+      <h1>Add Instance</h1>
+    </div>
+    <div class="instance-form">
+      <div class="form-group">
+        <label for="instanceType">Type</label>
+        <input type="text" id="instanceType" name="instanceType" required>
+      </div>
+      <div class="form-group">
+        <label for="instanceValue">Value</label>
+        <input type="text" id="instanceValue" name="instanceValue" required>
+      </div>
+    </div>
+    <div class="footer">
+      <button id="cancelButton" class="cancel-button">Cancel</button>
+      <button id="addButton" class="add-button">Add</button>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  main {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  .instance-form {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+
+  .footer {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  .cancel-button, .add-button {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .cancel-button {
+    background-color: #f5f5f5;
+    color: #333;
+    border: 1px solid #ccc;
+  }
+
+  .add-button {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+  }
+
+  .cancel-button:hover {
+    background-color: #e0e0e0;
+  }
+
+  .add-button:hover {
+    background-color: #1976D2;
+  }
+</style>
+
+<script define:vars={{ returnUrl }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    const cancelButton = document.getElementById('cancelButton');
+    const addButton = document.getElementById('addButton');
+    const instanceTypeInput = document.getElementById('instanceType');
+    const instanceValueInput = document.getElementById('instanceValue');
+
+    cancelButton.addEventListener('click', () => {
+      window.location.href = returnUrl;
+    });
+
+    addButton.addEventListener('click', () => {
+      const instanceType = instanceTypeInput.value.trim();
+      const instanceValue = instanceValueInput.value.trim();
+
+      if (instanceType && instanceValue) {
+        const updatedReturnUrl = new URL(returnUrl, window.location.origin);
+        updatedReturnUrl.searchParams.set('newInstance', JSON.stringify({ type: instanceType, value: instanceValue }));
+
+        window.location.href = updatedReturnUrl.toString();
+      } else {
+        alert('Please fill in both Type and Value fields.');
+      }
+    });
+  });
+</script>
