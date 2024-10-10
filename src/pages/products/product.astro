@@ -15,7 +15,6 @@ const productCore = {
   "Attributes": {} // Add Attributes to the core structure
 };
 
-const productAttributes = [];
 const productInstances = [];
 ---
 
@@ -60,16 +59,6 @@ const productInstances = [];
               )}
             </tr>
           ))}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Attributes Table -->
-    <div class="table-container">
-      <h2 class="table-title" id="attributesTitle">Attributes</h2>
-      <table id="attributesTable" class="data-table">
-        <tbody>
-          <!-- Attribute rows will be inserted here by JavaScript -->
         </tbody>
       </table>
     </div>
@@ -231,13 +220,11 @@ const productInstances = [];
 <script define:vars={{ categories, productId, selectedCategory }}>
   document.addEventListener('DOMContentLoaded', async () => {
     const coreTable = document.getElementById('coreTable');
-    const attributesTable = document.getElementById('attributesTable');
     const instancesTable = document.getElementById('instancesTable');
     const submitButton = document.getElementById('submitButton');
     const closeButton = document.getElementById('closeButton');
     const typeValue = document.getElementById('typeValue');
     const mediaGrid = document.getElementById('mediaGrid');
-    const attributesTitle = document.getElementById('attributesTitle');
     const instancesTitle = document.getElementById('instancesTitle');
 
     const typeOptions = ['Item', 'Variants', 'Service'];
@@ -246,6 +233,18 @@ const productInstances = [];
     // Load current product from local storage
     const currentProduct = JSON.parse(localStorage.getItem('currentProduct')) || {};
 
+    // Initialize currentProduct if it doesn't exist
+    if (!currentProduct || typeof currentProduct !== 'object') {
+      currentProduct = {
+        Name: "",
+        Medias: "",
+        Type: "Item",
+        Category: "",
+        Notes: "",
+        Attributes: {}
+      };
+    }
+
     // Function to update core table with current product data
     function updateCoreTable() {
       coreTable.querySelectorAll('td[data-key]').forEach(cell => {
@@ -253,8 +252,12 @@ const productInstances = [];
         if (key === 'Medias') {
           // Clear existing media
           mediaGrid.innerHTML = '';
-          if (currentProduct[key]) {
+          if (currentProduct[key] && typeof currentProduct[key] === 'string') {
             currentProduct[key].split(',').forEach(mediaUrl => {
+              addMediaThumbnail(mediaUrl.trim());
+            });
+          } else if (Array.isArray(currentProduct[key])) {
+            currentProduct[key].forEach(mediaUrl => {
               addMediaThumbnail(mediaUrl.trim());
             });
           }
@@ -346,11 +349,6 @@ const productInstances = [];
       }
     }
 
-    // Handle adding attributes
-    attributesTitle.addEventListener('click', () => {
-      window.location.href = '/products/attributes?returnUrl=' + encodeURIComponent(window.location.href);
-    });
-
     // Handle adding instances
     instancesTitle.addEventListener('click', () => {
       window.location.href = '/products/instance?returnUrl=' + encodeURIComponent(window.location.href);
@@ -384,6 +382,18 @@ const productInstances = [];
       window.history.replaceState({}, '', newUrl);
     }
 
+    // Check for selected category from URL params
+    const selectedCategory = urlParams.get('selectedCategory');
+    if (selectedCategory) {
+      currentProduct.Category = selectedCategory;
+      localStorage.setItem('currentProduct', JSON.stringify(currentProduct));
+      updateCoreTable();
+      // Remove the selectedCategory from the URL
+      urlParams.delete('selectedCategory');
+      const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+      window.history.replaceState({}, '', newUrl);
+    }
+
     // Function to save data to IndexedDB
     async function saveToIndexedDB(coreData) {
       const dbName = 'productDB';
@@ -401,7 +411,12 @@ const productInstances = [];
 
         const coreStore = transaction.objectStore('core');
 
-        // Save core data (including attributes)
+        // Remove the lowercase 'attributes' property if it exists
+        if ('attributes' in coreData) {
+          delete coreData.attributes;
+        }
+
+        // Save core data (including Attributes with uppercase 'A')
         coreStore.put(coreData);
 
         transaction.oncomplete = () => {
@@ -480,6 +495,11 @@ const productInstances = [];
             coreData[key] = cell.textContent;
           }
         });
+
+        // Remove lowercase 'attributes' if it exists
+        if ('attributes' in coreData) {
+          delete coreData.attributes;
+        }
 
         // Save data to IndexedDB
         saveToIndexedDB(coreData);
