@@ -231,7 +231,7 @@ const productInstances = [];
     let currentTypeIndex = 0;
 
     // Load current product from local storage
-    const currentProduct = JSON.parse(localStorage.getItem('currentProduct')) || {};
+    let currentProduct = JSON.parse(localStorage.getItem('currentProduct')) || {};
 
     // Initialize currentProduct if it doesn't exist
     if (!currentProduct || typeof currentProduct !== 'object') {
@@ -267,6 +267,7 @@ const productInstances = [];
         } else if (key === 'Attributes') {
           updateAttributesInCoreTable(currentProduct[key] || {});
         } else {
+          // This will handle Category, Notes, and any other fields
           cell.textContent = currentProduct[key] || '';
         }
       });
@@ -275,19 +276,18 @@ const productInstances = [];
     // Function to update attributes in the core table
     function updateAttributesInCoreTable(attributes) {
       const attributesCell = coreTable.querySelector('td[data-key="Attributes"]');
-      attributesCell.innerHTML = '';
-      Object.entries(attributes).forEach(([group, values]) => {
-        const groupDiv = document.createElement('div');
-        groupDiv.className = 'attribute-group';
-        groupDiv.innerHTML = `
-          <strong>${group}:</strong> ${values.join(', ')}
-        `;
-        attributesCell.appendChild(groupDiv);
-      });
+      if (attributesCell) {
+        attributesCell.innerHTML = '';
+        Object.entries(attributes).forEach(([group, values]) => {
+          const groupDiv = document.createElement('div');
+          groupDiv.className = 'attribute-group';
+          groupDiv.innerHTML = `
+            <strong>${group}:</strong> ${Array.isArray(values) ? values.join(', ') : values}
+          `;
+          attributesCell.appendChild(groupDiv);
+        });
+      }
     }
-
-    // Initial update of core table
-    updateCoreTable();
 
     // Function to add media thumbnail
     function addMediaThumbnail(mediaUrl) {
@@ -298,17 +298,44 @@ const productInstances = [];
       mediaGrid.appendChild(thumbnail);
     }
 
-    // Check if there are selected media from the upload page
-    const urlParams = new URLSearchParams(window.location.search);
-    const selectedMedia = urlParams.getAll('selectedMedia');
-    if (selectedMedia.length > 0) {
-      selectedMedia.forEach(mediaId => {
-        addMediaThumbnail(`https://via.placeholder.com/150?text=Media${mediaId}`);
-      });
-      urlParams.delete('selectedMedia');
-      const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-      window.history.replaceState({}, '', newUrl);
+    // Load existing data from IndexedDB
+    const existingData = await loadFromIndexedDB();
+    
+    // Update currentProduct with existing data
+    if (existingData.core) {
+      Object.assign(currentProduct, existingData.core);
     }
+
+    // Check URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSelectedCategory = urlParams.get('selectedCategory');
+    const selectedAttributesParam = urlParams.get('selectedAttributes');
+
+    // Update currentProduct with URL parameters if present
+    if (urlSelectedCategory) {
+      currentProduct.Category = urlSelectedCategory;
+    }
+
+    if (selectedAttributesParam) {
+      try {
+        const attributes = JSON.parse(decodeURIComponent(selectedAttributesParam));
+        currentProduct.Attributes = attributes;
+      } catch (error) {
+        console.error("Error parsing selectedAttributes:", error);
+      }
+    }
+
+    // Update the core table with the latest data
+    updateCoreTable();
+
+    // Save the updated currentProduct to localStorage
+    localStorage.setItem('currentProduct', JSON.stringify(currentProduct));
+
+    // Clean up URL parameters
+    urlParams.delete('selectedCategory');
+    urlParams.delete('selectedAttributes');
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+    window.history.replaceState({}, '', newUrl);
 
     // Handle core table interactions
     if (coreTable) {
@@ -341,30 +368,10 @@ const productInstances = [];
       });
     }
 
-    // Check for selected category
-    if (selectedCategory) {
-      const categoryCell = coreTable.querySelector('td[data-key="Category"]');
-      if (categoryCell) {
-        categoryCell.textContent = selectedCategory;
-      }
-    }
-
     // Handle adding instances
     instancesTitle.addEventListener('click', () => {
       window.location.href = '/products/instance?returnUrl=' + encodeURIComponent(window.location.href);
     });
-
-    // Check for selected attributes
-    const selectedAttributes = urlParams.get('selectedAttributes');
-    if (selectedAttributes) {
-      const attributes = JSON.parse(selectedAttributes);
-      currentProduct.Attributes = attributes;
-      updateAttributesInCoreTable(attributes);
-      localStorage.setItem('currentProduct', JSON.stringify(currentProduct));
-      urlParams.delete('selectedAttributes');
-      const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-      window.history.replaceState({}, '', newUrl);
-    }
 
     // Check for new instance
     const newInstance = urlParams.get('newInstance');
@@ -378,18 +385,6 @@ const productInstances = [];
       `;
       instancesTable.querySelector('tbody').appendChild(row);
       urlParams.delete('newInstance');
-      const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-      window.history.replaceState({}, '', newUrl);
-    }
-
-    // Check for selected category from URL params
-    const selectedCategory = urlParams.get('selectedCategory');
-    if (selectedCategory) {
-      currentProduct.Category = selectedCategory;
-      localStorage.setItem('currentProduct', JSON.stringify(currentProduct));
-      updateCoreTable();
-      // Remove the selectedCategory from the URL
-      urlParams.delete('selectedCategory');
       const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
       window.history.replaceState({}, '', newUrl);
     }
@@ -468,15 +463,6 @@ const productInstances = [];
           };
         };
       });
-    }
-
-    // Load existing data when the page loads
-    const existingData = await loadFromIndexedDB();
-    
-    // Update UI with existing data
-    if (existingData.core) {
-      Object.assign(currentProduct, existingData.core);
-      updateCoreTable();
     }
 
     if (submitButton) {

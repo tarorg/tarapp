@@ -1,0 +1,115 @@
+---
+// Existing frontmatter code (if any)
+---
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Database</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            font-family: Arial, sans-serif;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .property {
+            color: #333;
+            width: 25%;
+        }
+        .value {
+            color: #000;
+            width: 75%;
+        }
+        .value:focus {
+            outline: none;
+            background-color: #f8f8f8;
+        }
+        .type-toggle {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th class="property">Property</th>
+                <th class="value">Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="property">Name</td>
+                <td class="value" contenteditable="true" data-max-length="50"></td>
+            </tr>
+            <tr>
+                <td class="property">Type</td>
+                <td class="value type-toggle" tabindex="0">Item</td>
+            </tr>
+            <tr>
+                <td class="property">Category</td>
+                <td class="value" contenteditable="true"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        // Name field character limit
+        const nameCell = document.querySelector('.value[data-max-length]') as HTMLElement;
+        if (nameCell) {
+            nameCell.addEventListener('input', function(this: HTMLElement) {
+                const maxLength = parseInt(this.getAttribute('data-max-length') || '50');
+                if (this.textContent && this.textContent.length > maxLength) {
+                    this.textContent = this.textContent.slice(0, maxLength);
+                }
+            });
+        }
+
+        // Type toggle functionality
+        const typeCell = document.querySelector('.type-toggle') as HTMLElement;
+        const typeOptions = ['Item', 'Variants', 'Service'];
+        let currentTypeIndex = 0;
+
+        function toggleType() {
+            currentTypeIndex = (currentTypeIndex + 1) % typeOptions.length;
+            if (typeCell) {
+                typeCell.textContent = typeOptions[currentTypeIndex];
+            }
+        }
+
+        if (typeCell) {
+            typeCell.addEventListener('click', toggleType);
+
+            typeCell.addEventListener('keydown', function(e: KeyboardEvent) {
+                if (e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleType();
+                }
+            });
+        }
+
+        // Logging changes
+        document.querySelectorAll('.value').forEach(cell => {
+            cell.addEventListener('blur', function(this: HTMLElement) {
+                const previousSibling = this.previousElementSibling as HTMLElement;
+                if (previousSibling && previousSibling.textContent && this.textContent) {
+                    console.log(`${previousSibling.textContent} updated to: ${this.textContent}`);
+                }
+                // Here you can add code to save the changes, e.g., send to a server
+            });
+        });
+    </script>
+</body>
+</html>
