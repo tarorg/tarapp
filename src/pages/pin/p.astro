@@ -103,8 +103,11 @@ import categories from './cat.json';
             line-height: 32px;
         }
         .media-upload {
-            display: inline-block;
-            padding: 5px 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
             background-color: #f0f0f0;
             border: 1px solid #ddd;
             border-radius: 3px;
@@ -112,6 +115,17 @@ import categories from './cat.json';
         }
         .media-upload input {
             display: none;
+        }
+        .add-icon {
+            font-size: 24px;
+            line-height: 1;
+            color: #666;
+        }
+        .media-trigger {
+            cursor: pointer;
+        }
+        .media-trigger:hover {
+            background-color: #f0f0f0;
         }
     </style>
 </head>
@@ -144,13 +158,10 @@ import categories from './cat.json';
                 </td>
             </tr>
             <tr>
-                <td class="property">Medias</td>
+                <td class="property media-trigger">Medias</td>
                 <td class="value media-cell">
                     <div class="media-preview"></div>
-                    <label class="media-upload">
-                        <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
-                        Add a file or image
-                    </label>
+                    <input type="file" id="mediaInput" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" style="display: none;">
                 </td>
             </tr>
         </tbody>
@@ -239,8 +250,13 @@ import categories from './cat.json';
         });
 
         // Media upload functionality
-        const mediaInput = document.querySelector('.media-upload input') as HTMLInputElement;
+        const mediaTrigger = document.querySelector('.media-trigger') as HTMLElement;
+        const mediaInput = document.getElementById('mediaInput') as HTMLInputElement;
         const mediaPreview = document.querySelector('.media-preview') as HTMLElement;
+
+        mediaTrigger.addEventListener('click', () => {
+            mediaInput.click();
+        });
 
         mediaInput.addEventListener('change', (event) => {
             const files = (event.target as HTMLInputElement).files;
