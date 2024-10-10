@@ -1,5 +1,5 @@
 ---
-// Existing frontmatter code (if any)
+import categories from './cat.json';
 ---
 
 <html lang="en">
@@ -39,6 +39,39 @@
         .type-toggle {
             cursor: pointer;
         }
+        .category-wrapper {
+            position: relative;
+        }
+        .category-input {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            background-color: transparent;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .category-input:focus {
+            outline: none;
+        }
+        .category-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border: 1px solid #ddd;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .category-option {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .category-option:hover {
+            background-color: #f0f0f0;
+        }
     </style>
 </head>
 <body>
@@ -60,7 +93,14 @@
             </tr>
             <tr>
                 <td class="property">Category</td>
-                <td class="value" contenteditable="true"></td>
+                <td class="value category-wrapper">
+                    <input type="text" class="category-input" placeholder="Select a category">
+                    <div class="category-dropdown">
+                        {categories.categories.map((category) => (
+                            <div class="category-option" data-value={category}>{category}</div>
+                        ))}
+                    </div>
+                </td>
             </tr>
         </tbody>
     </table>
@@ -100,8 +140,44 @@
             });
         }
 
-        // Logging changes
-        document.querySelectorAll('.value').forEach(cell => {
+        // Category dropdown functionality
+        const categoryInput = document.querySelector('.category-input') as HTMLInputElement;
+        const categoryDropdown = document.querySelector('.category-dropdown') as HTMLElement;
+        const categoryOptions = document.querySelectorAll('.category-option');
+
+        categoryInput.addEventListener('focus', () => {
+            categoryDropdown.style.display = 'block';
+        });
+
+        categoryInput.addEventListener('blur', () => {
+            setTimeout(() => {
+                categoryDropdown.style.display = 'none';
+            }, 200);
+        });
+
+        categoryInput.addEventListener('input', () => {
+            const filter = categoryInput.value.toLowerCase();
+            categoryOptions.forEach((option) => {
+                const text = option.textContent?.toLowerCase();
+                if (text && text.includes(filter)) {
+                    (option as HTMLElement).style.display = 'block';
+                } else {
+                    (option as HTMLElement).style.display = 'none';
+                }
+            });
+        });
+
+        categoryOptions.forEach((option) => {
+            option.addEventListener('click', () => {
+                categoryInput.value = option.textContent || '';
+                categoryDropdown.style.display = 'none';
+                console.log(`Category updated to: ${categoryInput.value}`);
+                // Here you can add code to save the changes, e.g., send to a server
+            });
+        });
+
+        // Logging changes for other fields
+        document.querySelectorAll('.value:not(.category-wrapper)').forEach(cell => {
             cell.addEventListener('blur', function(this: HTMLElement) {
                 const previousSibling = this.previousElementSibling as HTMLElement;
                 if (previousSibling && previousSibling.textContent && this.textContent) {
