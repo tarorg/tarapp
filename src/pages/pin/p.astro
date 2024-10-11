@@ -1,5 +1,6 @@
 ---
 import categories from './cat.json';
+import attributes from './at.json';
 ---
 
 <html lang="en">
@@ -127,6 +128,41 @@ import categories from './cat.json';
         .media-trigger:hover {
             background-color: #f0f0f0;
         }
+        .option1-wrapper {
+            position: relative;
+        }
+        .option1-input {
+            width: 100%;
+            padding: 0;
+            border: none;
+            background-color: transparent;
+            font-size: inherit;
+            font-family: inherit;
+            color: inherit;
+            cursor: pointer;
+        }
+        .option1-input:focus {
+            outline: none;
+        }
+        .option1-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border: 1px solid #ddd;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .option1-option {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .option1-option:hover {
+            background-color: #f0f0f0;
+        }
     </style>
 </head>
 <body>
@@ -162,6 +198,23 @@ import categories from './cat.json';
                 <td class="value media-cell">
                     <div class="media-preview"></div>
                     <input type="file" id="mediaInput" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" style="display: none;">
+                </td>
+            </tr>
+            <tr>
+                <td class="property"><strong>Options</strong></td>
+                <td class="value options-toggle" tabindex="0">1</td>
+            </tr>
+            <tr>
+                <td class="property option1-wrapper">
+                    <input type="text" class="option1-input" placeholder="Select an attribute">
+                    <div class="option1-dropdown">
+                        {attributes.attributes.map((attribute) => (
+                            <div class="option1-option" data-value={attribute.name}>{attribute.name}</div>
+                        ))}
+                    </div>
+                </td>
+                <td class="value">
+                    <!-- Value cell is now empty -->
                 </td>
             </tr>
         </tbody>
@@ -238,8 +291,45 @@ import categories from './cat.json';
             });
         });
 
+        // Option 1 attribute dropdown functionality
+        const option1Input = document.querySelector('.option1-input') as HTMLInputElement;
+        const option1Dropdown = document.querySelector('.option1-dropdown') as HTMLElement;
+        const option1Options = document.querySelectorAll('.option1-option');
+
+        option1Input.addEventListener('focus', () => {
+            option1Dropdown.style.display = 'block';
+        });
+
+        option1Input.addEventListener('blur', () => {
+            setTimeout(() => {
+                option1Dropdown.style.display = 'none';
+            }, 200);
+        });
+
+        option1Input.addEventListener('input', () => {
+            const filter = option1Input.value.toLowerCase();
+            option1Options.forEach((option) => {
+                const text = option.textContent?.toLowerCase();
+                if (text && text.includes(filter)) {
+                    (option as HTMLElement).style.display = 'block';
+                } else {
+                    (option as HTMLElement).style.display = 'none';
+                }
+            });
+        });
+
+        option1Options.forEach((option) => {
+            option.addEventListener('click', () => {
+                option1Input.value = option.textContent || '';
+                option1Dropdown.style.display = 'none';
+                console.log(`Option 1 attribute updated to: ${option1Input.value}`);
+                
+                // You can add any additional logic here when an attribute is selected
+            });
+        });
+
         // Logging changes for other fields
-        document.querySelectorAll('.value:not(.category-wrapper)').forEach(cell => {
+        document.querySelectorAll('.value:not(.category-wrapper):not(.option1-wrapper)').forEach(cell => {
             cell.addEventListener('blur', function(this: HTMLElement) {
                 const previousSibling = this.previousElementSibling as HTMLElement;
                 if (previousSibling && previousSibling.textContent && this.textContent) {
@@ -299,8 +389,31 @@ import categories from './cat.json';
         function getFileIcon(fileType: string): string {
             if (fileType.includes('pdf')) return '📄';
             if (fileType.includes('doc')) return '📝';
-            if (fileType.includes('xls')) return '📊';
+            if (fileType.includes('xls')) return '';
             return '📁'; // default icon for other file types
+        }
+
+        // Options toggle functionality
+        const optionsCell = document.querySelector('.options-toggle') as HTMLElement;
+        const optionsValues = ['1', '2', '3', '4', '5', '6'];
+        let currentOptionsIndex = 0;
+
+        function toggleOptions() {
+            currentOptionsIndex = (currentOptionsIndex + 1) % optionsValues.length;
+            if (optionsCell) {
+                optionsCell.textContent = optionsValues[currentOptionsIndex];
+            }
+        }
+
+        if (optionsCell) {
+            optionsCell.addEventListener('click', toggleOptions);
+
+            optionsCell.addEventListener('keydown', function(e: KeyboardEvent) {
+                if (e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleOptions();
+                }
+            });
         }
     </script>
 </body>
