@@ -166,18 +166,37 @@ import attributes from './at.json';
         .option1-value-wrapper {
             position: relative;
         }
-        .option1-value-input {
-            width: 100%;
-            padding: 0;
-            border: none;
-            background-color: transparent;
-            font-size: inherit;
-            font-family: inherit;
-            color: inherit;
+        .option1-value-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            min-height: 24px;
+            padding: 2px;
+        }
+        .option1-value-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .option1-value-tag {
+            background-color: #e0e0e0;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        .option1-value-tag-remove {
+            margin-left: 4px;
             cursor: pointer;
         }
-        .option1-value-input:focus {
+        .option1-value-input {
+            flex-grow: 1;
+            border: none;
             outline: none;
+            font-size: inherit;
+            font-family: inherit;
+            min-width: 60px;
         }
         .option1-value-dropdown {
             position: absolute;
@@ -241,7 +260,7 @@ import attributes from './at.json';
             </tr>
             <tr>
                 <td class="property option1-wrapper">
-                    <input type="text" class="option1-input" placeholder="Select an attribute">
+                    <input type="text" class="option1-input" placeholder="attribute">
                     <div class="option1-dropdown">
                         {attributes.attributes.map((attribute) => (
                             <div class="option1-option" data-value={attribute.name}>{attribute.name}</div>
@@ -249,7 +268,10 @@ import attributes from './at.json';
                     </div>
                 </td>
                 <td class="value option1-value-wrapper">
-                    <input type="text" class="option1-value-input" placeholder="Select a value" readonly>
+                    <div class="option1-value-container">
+                        <div class="option1-value-tags"></div>
+                        <input type="text" class="option1-value-input" placeholder="Select values">
+                    </div>
                     <div class="option1-value-dropdown"></div>
                 </td>
             </tr>
@@ -332,63 +354,112 @@ import attributes from './at.json';
         const option1Dropdown = document.querySelector('.option1-dropdown');
         const option1Options = document.querySelectorAll('.option1-option');
 
+        const option1ValueContainer = document.querySelector('.option1-value-container');
+        const option1ValueTags = document.querySelector('.option1-value-tags');
         const option1ValueInput = document.querySelector('.option1-value-input');
         const option1ValueDropdown = document.querySelector('.option1-value-dropdown');
 
+        let selectedValues = new Set();
+
+        function updateValueTags() {
+            option1ValueTags.innerHTML = '';
+            selectedValues.forEach(value => {
+                const tag = document.createElement('div');
+                tag.className = 'option1-value-tag';
+                tag.innerHTML = `${value}<span class="option1-value-tag-remove">×</span>`;
+                tag.querySelector('.option1-value-tag-remove').addEventListener('click', () => {
+                    selectedValues.delete(value);
+                    updateValueTags();
+                });
+                option1ValueTags.appendChild(tag);
+            });
+        }
+
+        // Show Option 1 attribute dropdown
         option1Input.addEventListener('focus', () => {
             option1Dropdown.style.display = 'block';
         });
 
-        option1Input.addEventListener('blur', () => {
-            setTimeout(() => {
+        // Hide Option 1 attribute dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!option1Input.contains(e.target) && !option1Dropdown.contains(e.target)) {
                 option1Dropdown.style.display = 'none';
-            }, 200);
+            }
         });
 
+        // Filter Option 1 attribute options
+        option1Input.addEventListener('input', () => {
+            const filter = option1Input.value.toLowerCase();
+            option1Options.forEach((option) => {
+                const text = option.textContent?.toLowerCase();
+                if (text && text.includes(filter)) {
+                    option.style.display = 'block';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+        });
+
+        // Select Option 1 attribute and populate value dropdown
         option1Options.forEach((option) => {
             option.addEventListener('click', () => {
                 option1Input.value = option.textContent || '';
                 option1Dropdown.style.display = 'none';
                 console.log(`Option 1 attribute updated to: ${option1Input.value}`);
                 
-                // Populate the value dropdown when an attribute is selected
                 const selectedAttribute = option1Input.value;
                 const attributeValues = attributes.attributes.find(attr => attr.name === selectedAttribute)?.values || [];
                 
-                // Clear previous options
                 option1ValueDropdown.innerHTML = '';
                 
-                // Add new options
                 attributeValues.forEach(value => {
                     const valueOption = document.createElement('div');
                     valueOption.className = 'option1-value-option';
                     valueOption.textContent = value;
+                    valueOption.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (selectedValues.has(value)) {
+                            selectedValues.delete(value);
+                        } else {
+                            selectedValues.add(value);
+                        }
+                        updateValueTags();
+                        option1ValueInput.value = '';
+                        option1ValueDropdown.style.display = 'block';
+                    });
                     option1ValueDropdown.appendChild(valueOption);
                 });
 
-                // Reset value input
-                option1ValueInput.value = '';
+                selectedValues.clear();
+                updateValueTags();
             });
         });
 
-        // Option 1 value dropdown functionality
+        // Show Option 1 value dropdown
         option1ValueInput.addEventListener('focus', () => {
             option1ValueDropdown.style.display = 'block';
         });
 
-        option1ValueInput.addEventListener('blur', () => {
-            setTimeout(() => {
+        // Hide Option 1 value dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!option1ValueContainer.contains(e.target)) {
                 option1ValueDropdown.style.display = 'none';
-            }, 200);
+            }
         });
 
-        option1ValueDropdown.addEventListener('click', (e) => {
-            if (e.target && e.target.classList.contains('option1-value-option')) {
-                option1ValueInput.value = e.target.textContent || '';
-                option1ValueDropdown.style.display = 'none';
-                console.log(`Option 1 value updated to: ${option1ValueInput.value}`);
-                // Here you can add code to save the changes, e.g., send to a server
-            }
+        // Filter Option 1 value options
+        option1ValueInput.addEventListener('input', () => {
+            const filter = option1ValueInput.value.toLowerCase();
+            const options = option1ValueDropdown.querySelectorAll('.option1-value-option');
+            options.forEach(option => {
+                const text = option.textContent.toLowerCase();
+                option.style.display = text.includes(filter) ? 'block' : 'none';
+            });
+            option1ValueDropdown.style.display = 'block';
+        });
+
+        option1ValueContainer.addEventListener('click', () => {
+            option1ValueInput.focus();
         });
 
         // Logging changes for other fields
