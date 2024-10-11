@@ -163,6 +163,41 @@ import attributes from './at.json';
         .option1-option:hover {
             background-color: #f0f0f0;
         }
+        .option1-value-wrapper {
+            position: relative;
+        }
+        .option1-value-input {
+            width: 100%;
+            padding: 0;
+            border: none;
+            background-color: transparent;
+            font-size: inherit;
+            font-family: inherit;
+            color: inherit;
+            cursor: pointer;
+        }
+        .option1-value-input:focus {
+            outline: none;
+        }
+        .option1-value-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border: 1px solid #ddd;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .option1-value-option {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .option1-value-option:hover {
+            background-color: #f0f0f0;
+        }
     </style>
 </head>
 <body>
@@ -213,18 +248,19 @@ import attributes from './at.json';
                         ))}
                     </div>
                 </td>
-                <td class="value">
-                    <!-- Value cell is now empty -->
+                <td class="value option1-value-wrapper">
+                    <input type="text" class="option1-value-input" placeholder="Select a value" readonly>
+                    <div class="option1-value-dropdown"></div>
                 </td>
             </tr>
         </tbody>
     </table>
 
-    <script>
+    <script define:vars={{ attributes }}>
         // Name field character limit
-        const nameCell = document.querySelector('.value[data-max-length]') as HTMLElement;
+        const nameCell = document.querySelector('.value[data-max-length]');
         if (nameCell) {
-            nameCell.addEventListener('input', function(this: HTMLElement) {
+            nameCell.addEventListener('input', function() {
                 const maxLength = parseInt(this.getAttribute('data-max-length') || '50');
                 if (this.textContent && this.textContent.length > maxLength) {
                     this.textContent = this.textContent.slice(0, maxLength);
@@ -233,7 +269,7 @@ import attributes from './at.json';
         }
 
         // Type toggle functionality
-        const typeCell = document.querySelector('.type-toggle') as HTMLElement;
+        const typeCell = document.querySelector('.type-toggle');
         const typeOptions = ['Item', 'Variants', 'Service'];
         let currentTypeIndex = 0;
 
@@ -247,7 +283,7 @@ import attributes from './at.json';
         if (typeCell) {
             typeCell.addEventListener('click', toggleType);
 
-            typeCell.addEventListener('keydown', function(e: KeyboardEvent) {
+            typeCell.addEventListener('keydown', function(e) {
                 if (e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     toggleType();
@@ -256,8 +292,8 @@ import attributes from './at.json';
         }
 
         // Category dropdown functionality
-        const categoryInput = document.querySelector('.category-input') as HTMLInputElement;
-        const categoryDropdown = document.querySelector('.category-dropdown') as HTMLElement;
+        const categoryInput = document.querySelector('.category-input');
+        const categoryDropdown = document.querySelector('.category-dropdown');
         const categoryOptions = document.querySelectorAll('.category-option');
 
         categoryInput.addEventListener('focus', () => {
@@ -275,9 +311,9 @@ import attributes from './at.json';
             categoryOptions.forEach((option) => {
                 const text = option.textContent?.toLowerCase();
                 if (text && text.includes(filter)) {
-                    (option as HTMLElement).style.display = 'block';
+                    option.style.display = 'block';
                 } else {
-                    (option as HTMLElement).style.display = 'none';
+                    option.style.display = 'none';
                 }
             });
         });
@@ -292,9 +328,12 @@ import attributes from './at.json';
         });
 
         // Option 1 attribute dropdown functionality
-        const option1Input = document.querySelector('.option1-input') as HTMLInputElement;
-        const option1Dropdown = document.querySelector('.option1-dropdown') as HTMLElement;
+        const option1Input = document.querySelector('.option1-input');
+        const option1Dropdown = document.querySelector('.option1-dropdown');
         const option1Options = document.querySelectorAll('.option1-option');
+
+        const option1ValueInput = document.querySelector('.option1-value-input');
+        const option1ValueDropdown = document.querySelector('.option1-value-dropdown');
 
         option1Input.addEventListener('focus', () => {
             option1Dropdown.style.display = 'block';
@@ -306,32 +345,56 @@ import attributes from './at.json';
             }, 200);
         });
 
-        option1Input.addEventListener('input', () => {
-            const filter = option1Input.value.toLowerCase();
-            option1Options.forEach((option) => {
-                const text = option.textContent?.toLowerCase();
-                if (text && text.includes(filter)) {
-                    (option as HTMLElement).style.display = 'block';
-                } else {
-                    (option as HTMLElement).style.display = 'none';
-                }
-            });
-        });
-
         option1Options.forEach((option) => {
             option.addEventListener('click', () => {
                 option1Input.value = option.textContent || '';
                 option1Dropdown.style.display = 'none';
                 console.log(`Option 1 attribute updated to: ${option1Input.value}`);
                 
-                // You can add any additional logic here when an attribute is selected
+                // Populate the value dropdown when an attribute is selected
+                const selectedAttribute = option1Input.value;
+                const attributeValues = attributes.attributes.find(attr => attr.name === selectedAttribute)?.values || [];
+                
+                // Clear previous options
+                option1ValueDropdown.innerHTML = '';
+                
+                // Add new options
+                attributeValues.forEach(value => {
+                    const valueOption = document.createElement('div');
+                    valueOption.className = 'option1-value-option';
+                    valueOption.textContent = value;
+                    option1ValueDropdown.appendChild(valueOption);
+                });
+
+                // Reset value input
+                option1ValueInput.value = '';
             });
+        });
+
+        // Option 1 value dropdown functionality
+        option1ValueInput.addEventListener('focus', () => {
+            option1ValueDropdown.style.display = 'block';
+        });
+
+        option1ValueInput.addEventListener('blur', () => {
+            setTimeout(() => {
+                option1ValueDropdown.style.display = 'none';
+            }, 200);
+        });
+
+        option1ValueDropdown.addEventListener('click', (e) => {
+            if (e.target && e.target.classList.contains('option1-value-option')) {
+                option1ValueInput.value = e.target.textContent || '';
+                option1ValueDropdown.style.display = 'none';
+                console.log(`Option 1 value updated to: ${option1ValueInput.value}`);
+                // Here you can add code to save the changes, e.g., send to a server
+            }
         });
 
         // Logging changes for other fields
         document.querySelectorAll('.value:not(.category-wrapper):not(.option1-wrapper)').forEach(cell => {
-            cell.addEventListener('blur', function(this: HTMLElement) {
-                const previousSibling = this.previousElementSibling as HTMLElement;
+            cell.addEventListener('blur', function() {
+                const previousSibling = this.previousElementSibling;
                 if (previousSibling && previousSibling.textContent && this.textContent) {
                     console.log(`${previousSibling.textContent} updated to: ${this.textContent}`);
                 }
@@ -340,16 +403,16 @@ import attributes from './at.json';
         });
 
         // Media upload functionality
-        const mediaTrigger = document.querySelector('.media-trigger') as HTMLElement;
-        const mediaInput = document.getElementById('mediaInput') as HTMLInputElement;
-        const mediaPreview = document.querySelector('.media-preview') as HTMLElement;
+        const mediaTrigger = document.querySelector('.media-trigger');
+        const mediaInput = document.getElementById('mediaInput');
+        const mediaPreview = document.querySelector('.media-preview');
 
         mediaTrigger.addEventListener('click', () => {
             mediaInput.click();
         });
 
         mediaInput.addEventListener('change', (event) => {
-            const files = (event.target as HTMLInputElement).files;
+            const files = event.target.files;
             if (files) {
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
@@ -363,7 +426,7 @@ import attributes from './at.json';
 
                         if (file.type.startsWith('image/')) {
                             const img = document.createElement('img');
-                            img.src = e.target?.result as string;
+                            img.src = e.target.result;
                             img.alt = file.name;
                             img.style.width = '32px';
                             img.style.height = '32px';
@@ -386,15 +449,15 @@ import attributes from './at.json';
         });
 
         // Add this function to determine the appropriate icon
-        function getFileIcon(fileType: string): string {
+        function getFileIcon(fileType) {
             if (fileType.includes('pdf')) return '📄';
             if (fileType.includes('doc')) return '📝';
-            if (fileType.includes('xls')) return '';
+            if (fileType.includes('xls')) return '📊';
             return '📁'; // default icon for other file types
         }
 
         // Options toggle functionality
-        const optionsCell = document.querySelector('.options-toggle') as HTMLElement;
+        const optionsCell = document.querySelector('.options-toggle');
         const optionsValues = ['1', '2', '3', '4', '5', '6'];
         let currentOptionsIndex = 0;
 
@@ -408,7 +471,7 @@ import attributes from './at.json';
         if (optionsCell) {
             optionsCell.addEventListener('click', toggleOptions);
 
-            optionsCell.addEventListener('keydown', function(e: KeyboardEvent) {
+            optionsCell.addEventListener('keydown', function(e) {
                 if (e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     toggleOptions();
