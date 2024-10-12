@@ -257,25 +257,16 @@ import attributes from './at.json';
             font-size: 20px;
             color: #888;
         }
-        /* Add these new styles for the Attributes row */
-        .attributes-header {
-            background-color: #f2f2f2;
-            text-align: left;
-            padding: 12px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        .attributes-icon {
-            float: right;
-            font-size: 18px;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
     <table id="coreTable">
-        <!-- Remove the thead section -->
+        <thead>
+            <tr>
+                <th class="property">Property</th>
+                <th class="value">Value</th>
+            </tr>
+        </thead>
         <tbody>
             <tr>
                 <td class="property">Name</td>
@@ -303,18 +294,17 @@ import attributes from './at.json';
                     <input type="file" id="mediaInput" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" style="display: none;">
                 </td>
             </tr>
-            <!-- Modified Attributes row -->
-            <tr>
-                <td colspan="2" class="attributes-header">
-                    <strong>Attributes</strong>
-                    <span class="attributes-icon">&#43;</span> <!-- Changed to plus sign (add icon) -->
-                </td>
-            </tr>
         </tbody>
     </table>
 
     <table id="attributesTable">
-        <!-- Remove the thead section -->
+        <thead>
+            <tr>
+                <th class="property type-cell">Type</th>
+                <th class="property value-cell">Value</th>
+                <th class="property asset-cell">Asset</th>
+            </tr>
+        </thead>
         <tbody>
             <tr>
                 <td class="value type-cell attribute-wrapper">
@@ -615,24 +605,6 @@ import attributes from './at.json';
             if (fileType.includes('xls')) return '📊';
             return '📁'; // default icon for other file types
         }
-
-        // Add this new code at the end of the script section
-        const attributesHeader = document.querySelector('.attributes-header');
-        const attributesIcon = document.querySelector('.attributes-icon');
-        const attributesTable = document.getElementById('attributesTable');
-
-        attributesHeader.addEventListener('click', () => {
-            if (attributesTable.style.display === 'none') {
-                attributesTable.style.display = 'table';
-                attributesIcon.innerHTML = '&#8722;'; // Minus sign
-            } else {
-                attributesTable.style.display = 'none';
-                attributesIcon.innerHTML = '&#43;'; // Plus sign
-            }
-        });
-
-        // Initially hide the attributes table
-        attributesTable.style.display = 'none';
     </script>
 </body>
 </html>
