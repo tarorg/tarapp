@@ -57,7 +57,7 @@ import '../../styles/global.css';
                             </div>
                         </td>
                         <td class="py-2 px-4">
-                            <input type="text" class="w-full focus:outline-none bg-transparent type-value-input" placeholder="Enter a value">
+                            <input type="text" class="w-full focus:outline-none bg-transparent type-value-input" placeholder="Enter values (comma-separated)" readonly>
                         </td>
                     </tr>
                 </tbody>
@@ -65,7 +65,17 @@ import '../../styles/global.css';
         </div>
     </div>
 
-    <script define:vars={{ attributes, categories }}>
+    <!-- Bottom Sheet -->
+    <div id="bottomSheet" class="fixed inset-x-0 bottom-0 bg-white shadow-md rounded-t-xl transform translate-y-full transition-transform duration-300 ease-in-out z-50">
+        <div class="p-4">
+            <input type="text" id="bottomSheetSearch" class="w-full p-2 border rounded-md mb-4" placeholder="Search values...">
+            <div id="bottomSheetContent" class="max-h-64 overflow-y-auto">
+                <!-- Values will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script define:vars={{ attributes }}>
         function setupDropdown(inputSelector, dropdownSelector, optionsSelector) {
             const input = document.querySelector(inputSelector);
             const dropdown = document.querySelector(dropdownSelector);
@@ -213,6 +223,75 @@ import '../../styles/global.css';
             if (fileType.includes('xls')) return '📊';
             return '📁'; // default icon for other file types
         }
+
+        // Bottom Sheet functionality
+        const bottomSheet = document.getElementById('bottomSheet');
+        const bottomSheetContent = document.getElementById('bottomSheetContent');
+        const bottomSheetSearch = document.getElementById('bottomSheetSearch');
+        const typeInput = document.querySelector('.type-input');
+        const typeValueInput = document.querySelector('.type-value-input');
+
+        let currentValues = [];
+        let selectedValues = new Set();
+
+        typeValueInput.addEventListener('click', () => {
+            const selectedType = typeInput.value;
+            const attribute = attributes.attributes.find(attr => attr.Type === selectedType);
+            if (attribute) {
+                currentValues = attribute.values;
+                populateBottomSheet(currentValues);
+                openBottomSheet();
+            }
+        });
+
+        function populateBottomSheet(values) {
+            bottomSheetContent.innerHTML = values.map(value => 
+                `<div class="py-2 px-4 hover:bg-gray-100 cursor-pointer bottom-sheet-item ${selectedValues.has(value) ? 'bg-blue-100' : ''}">${value}</div>`
+            ).join('');
+        }
+
+        function openBottomSheet() {
+            bottomSheet.classList.remove('translate-y-full');
+            bottomSheetSearch.value = '';
+            bottomSheetSearch.focus();
+        }
+
+        function closeBottomSheet() {
+            bottomSheet.classList.add('translate-y-full');
+        }
+
+        bottomSheetSearch.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredValues = currentValues.filter(value => 
+                value.toLowerCase().includes(searchTerm)
+            );
+            populateBottomSheet(filteredValues);
+        });
+
+        bottomSheetContent.addEventListener('click', (e) => {
+            if (e.target.classList.contains('bottom-sheet-item')) {
+                const value = e.target.textContent;
+                if (selectedValues.has(value)) {
+                    selectedValues.delete(value);
+                    e.target.classList.remove('bg-blue-100');
+                } else {
+                    selectedValues.add(value);
+                    e.target.classList.add('bg-blue-100');
+                }
+                updateTypeValueInput();
+            }
+        });
+
+        function updateTypeValueInput() {
+            typeValueInput.value = Array.from(selectedValues).join(', ');
+        }
+
+        // Close bottom sheet when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!bottomSheet.contains(e.target) && !typeValueInput.contains(e.target)) {
+                closeBottomSheet();
+            }
+        });
     </script>
 
     <style>
@@ -301,6 +380,23 @@ import '../../styles/global.css';
             width: 100%;
             left: 0;
             z-index: 1000;
+        }
+
+        /* Bottom Sheet Styles */
+        #bottomSheet {
+            max-height: 80vh;
+        }
+
+        .bottom-sheet-item {
+            transition: background-color 0.2s;
+        }
+
+        .bottom-sheet-item:active {
+            background-color: #e5e7eb;
+        }
+
+        .bottom-sheet-item.selected {
+            background-color: #93c5fd;
         }
     </style>
 </body>
