@@ -13,7 +13,7 @@ import attributes from './at.json';
             border-collapse: collapse;
             width: 100%;
             max-width: 600px;
-            margin: 20px auto;
+            margin: 0 auto; /* Changed from 20px auto to 0 auto */
             font-family: Arial, sans-serif;
         }
         th, td {
@@ -128,10 +128,27 @@ import attributes from './at.json';
         .media-trigger:hover {
             background-color: #f0f0f0;
         }
-        .option1-wrapper {
+        /* Add these new styles for the attributes table */
+        #attributesTable .type-cell {
+            width: 25%;
+        }
+
+        #attributesTable .value-cell {
+            width: calc(100% - 25% - 32px);
+        }
+
+        #attributesTable .asset-cell {
+            width: 32px;
+        }
+
+        /* Add this new style to remove margin between tables */
+        #attributesTable {
+            margin-top: -1px; /* Negative margin to overlap borders */
+        }
+        .attribute-wrapper {
             position: relative;
         }
-        .option1-input {
+        .attribute-input {
             width: 100%;
             padding: 0;
             border: none;
@@ -141,10 +158,10 @@ import attributes from './at.json';
             color: inherit;
             cursor: pointer;
         }
-        .option1-input:focus {
+        .attribute-input:focus {
             outline: none;
         }
-        .option1-dropdown {
+        .attribute-dropdown {
             position: absolute;
             top: 100%;
             left: 0;
@@ -156,29 +173,29 @@ import attributes from './at.json';
             z-index: 1000;
             display: none;
         }
-        .option1-option {
+        .attribute-option {
             padding: 8px;
             cursor: pointer;
         }
-        .option1-option:hover {
+        .attribute-option:hover {
             background-color: #f0f0f0;
         }
-        .option1-value-wrapper {
+        .attribute-value-wrapper {
             position: relative;
         }
-        .option1-value-container {
+        .attribute-value-container {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
             min-height: 24px;
             padding: 2px;
         }
-        .option1-value-tags {
+        .attribute-value-tags {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
         }
-        .option1-value-tag {
+        .attribute-value-tag {
             background-color: #e0e0e0;
             border-radius: 3px;
             padding: 2px 6px;
@@ -186,11 +203,11 @@ import attributes from './at.json';
             display: flex;
             align-items: center;
         }
-        .option1-value-tag-remove {
+        .attribute-value-tag-remove {
             margin-left: 4px;
             cursor: pointer;
         }
-        .option1-value-input {
+        .attribute-value-input {
             flex-grow: 1;
             border: none;
             outline: none;
@@ -198,7 +215,7 @@ import attributes from './at.json';
             font-family: inherit;
             min-width: 60px;
         }
-        .option1-value-dropdown {
+        .attribute-value-dropdown {
             position: absolute;
             top: 100%;
             left: 0;
@@ -210,17 +227,40 @@ import attributes from './at.json';
             z-index: 1000;
             display: none;
         }
-        .option1-value-option {
+        .attribute-value-option {
             padding: 8px;
             cursor: pointer;
         }
-        .option1-value-option:hover {
+        .attribute-value-option:hover {
             background-color: #f0f0f0;
+        }
+        .asset-preview {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background-color: #f8f8f8;
+        }
+
+        .asset-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .asset-preview .upload-icon {
+            font-size: 20px;
+            color: #888;
         }
     </style>
 </head>
 <body>
-    <table>
+    <table id="coreTable">
         <thead>
             <tr>
                 <th class="property">Property</th>
@@ -254,31 +294,44 @@ import attributes from './at.json';
                     <input type="file" id="mediaInput" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" style="display: none;">
                 </td>
             </tr>
+        </tbody>
+    </table>
+
+    <table id="attributesTable">
+        <thead>
             <tr>
-                <td class="property"><strong>Options</strong></td>
-                <td class="value options-toggle" tabindex="0">1</td>
+                <th class="property type-cell">Type</th>
+                <th class="property value-cell">Value</th>
+                <th class="property asset-cell">Asset</th>
             </tr>
+        </thead>
+        <tbody>
             <tr>
-                <td class="property option1-wrapper">
-                    <input type="text" class="option1-input" placeholder="attribute">
-                    <div class="option1-dropdown">
+                <td class="value type-cell attribute-wrapper">
+                    <input type="text" class="attribute-input" placeholder="Select Type">
+                    <div class="attribute-dropdown">
                         {attributes.attributes.map((attribute) => (
-                            <div class="option1-option" data-value={attribute.name}>{attribute.name}</div>
+                            <div class="attribute-option" data-value={attribute.Type}>{attribute.Type}</div>
                         ))}
                     </div>
                 </td>
-                <td class="value option1-value-wrapper">
-                    <div class="option1-value-container">
-                        <div class="option1-value-tags"></div>
-                        <input type="text" class="option1-value-input" placeholder="Select values">
-                    </div>
-                    <div class="option1-value-dropdown"></div>
+                <td class="value value-cell attribute-value-wrapper">
+                    <input type="text" class="attribute-value-input" placeholder="Select value">
+                    <div class="attribute-value-dropdown"></div>
+                </td>
+                <td class="value asset-cell">
+                    <div class="asset-preview"></div>
+                    <input type="color" class="color-picker" style="display: none;">
+                    <input type="file" class="file-upload" style="display: none;" accept="image/*">
                 </td>
             </tr>
         </tbody>
     </table>
 
     <script define:vars={{ attributes }}>
+        const coreTable = document.getElementById('coreTable');
+        const attributesTable = document.getElementById('attributesTable');
+
         // Name field character limit
         const nameCell = document.querySelector('.value[data-max-length]');
         if (nameCell) {
@@ -349,119 +402,6 @@ import attributes from './at.json';
             });
         });
 
-        // Option 1 attribute dropdown functionality
-        const option1Input = document.querySelector('.option1-input');
-        const option1Dropdown = document.querySelector('.option1-dropdown');
-        const option1Options = document.querySelectorAll('.option1-option');
-
-        const option1ValueContainer = document.querySelector('.option1-value-container');
-        const option1ValueTags = document.querySelector('.option1-value-tags');
-        const option1ValueInput = document.querySelector('.option1-value-input');
-        const option1ValueDropdown = document.querySelector('.option1-value-dropdown');
-
-        let selectedValues = new Set();
-
-        function updateValueTags() {
-            option1ValueTags.innerHTML = '';
-            selectedValues.forEach(value => {
-                const tag = document.createElement('div');
-                tag.className = 'option1-value-tag';
-                tag.innerHTML = `${value}<span class="option1-value-tag-remove">×</span>`;
-                tag.querySelector('.option1-value-tag-remove').addEventListener('click', () => {
-                    selectedValues.delete(value);
-                    updateValueTags();
-                });
-                option1ValueTags.appendChild(tag);
-            });
-        }
-
-        // Show Option 1 attribute dropdown
-        option1Input.addEventListener('focus', () => {
-            option1Dropdown.style.display = 'block';
-        });
-
-        // Hide Option 1 attribute dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!option1Input.contains(e.target) && !option1Dropdown.contains(e.target)) {
-                option1Dropdown.style.display = 'none';
-            }
-        });
-
-        // Filter Option 1 attribute options
-        option1Input.addEventListener('input', () => {
-            const filter = option1Input.value.toLowerCase();
-            option1Options.forEach((option) => {
-                const text = option.textContent?.toLowerCase();
-                if (text && text.includes(filter)) {
-                    option.style.display = 'block';
-                } else {
-                    option.style.display = 'none';
-                }
-            });
-        });
-
-        // Select Option 1 attribute and populate value dropdown
-        option1Options.forEach((option) => {
-            option.addEventListener('click', () => {
-                option1Input.value = option.textContent || '';
-                option1Dropdown.style.display = 'none';
-                console.log(`Option 1 attribute updated to: ${option1Input.value}`);
-                
-                const selectedAttribute = option1Input.value;
-                const attributeValues = attributes.attributes.find(attr => attr.name === selectedAttribute)?.values || [];
-                
-                option1ValueDropdown.innerHTML = '';
-                
-                attributeValues.forEach(value => {
-                    const valueOption = document.createElement('div');
-                    valueOption.className = 'option1-value-option';
-                    valueOption.textContent = value;
-                    valueOption.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        if (selectedValues.has(value)) {
-                            selectedValues.delete(value);
-                        } else {
-                            selectedValues.add(value);
-                        }
-                        updateValueTags();
-                        option1ValueInput.value = '';
-                        option1ValueDropdown.style.display = 'block';
-                    });
-                    option1ValueDropdown.appendChild(valueOption);
-                });
-
-                selectedValues.clear();
-                updateValueTags();
-            });
-        });
-
-        // Show Option 1 value dropdown
-        option1ValueInput.addEventListener('focus', () => {
-            option1ValueDropdown.style.display = 'block';
-        });
-
-        // Hide Option 1 value dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!option1ValueContainer.contains(e.target)) {
-                option1ValueDropdown.style.display = 'none';
-            }
-        });
-
-        // Filter Option 1 value options
-        option1ValueInput.addEventListener('input', () => {
-            const filter = option1ValueInput.value.toLowerCase();
-            const options = option1ValueDropdown.querySelectorAll('.option1-value-option');
-            options.forEach(option => {
-                const text = option.textContent.toLowerCase();
-                option.style.display = text.includes(filter) ? 'block' : 'none';
-            });
-            option1ValueDropdown.style.display = 'block';
-        });
-
-        option1ValueContainer.addEventListener('click', () => {
-            option1ValueInput.focus();
-        });
-
         // Logging changes for other fields
         document.querySelectorAll('.value:not(.category-wrapper):not(.option1-wrapper)').forEach(cell => {
             cell.addEventListener('blur', function() {
@@ -527,27 +467,143 @@ import attributes from './at.json';
             return '📁'; // default icon for other file types
         }
 
-        // Options toggle functionality
-        const optionsCell = document.querySelector('.options-toggle');
-        const optionsValues = ['1', '2', '3', '4', '5', '6'];
-        let currentOptionsIndex = 0;
+        // Attribute table functionality
+        const attributeInput = document.querySelector('.attribute-input');
+        const attributeDropdown = document.querySelector('.attribute-dropdown');
+        const attributeOptions = document.querySelectorAll('.attribute-option');
+        const attributeValueInput = document.querySelector('.attribute-value-input');
+        const attributeValueDropdown = document.querySelector('.attribute-value-dropdown');
+        const assetPreview = document.querySelector('.asset-preview');
+        const colorPicker = document.querySelector('.color-picker');
+        const fileUpload = document.querySelector('.file-upload');
 
-        function toggleOptions() {
-            currentOptionsIndex = (currentOptionsIndex + 1) % optionsValues.length;
-            if (optionsCell) {
-                optionsCell.textContent = optionsValues[currentOptionsIndex];
+        // Show attribute dropdown
+        attributeInput.addEventListener('click', () => {
+            attributeDropdown.style.display = 'block';
+        });
+
+        // Hide attribute dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!attributeInput.contains(e.target) && !attributeDropdown.contains(e.target)) {
+                attributeDropdown.style.display = 'none';
+            }
+        });
+
+        // Filter attribute options
+        attributeInput.addEventListener('input', () => {
+            const filter = attributeInput.value.toLowerCase();
+            attributeOptions.forEach((option) => {
+                const text = option.textContent?.toLowerCase();
+                if (text && text.includes(filter)) {
+                    option.style.display = 'block';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+            attributeDropdown.style.display = 'block';
+        });
+
+        // Select attribute and populate value dropdown
+        attributeOptions.forEach((option) => {
+            option.addEventListener('click', () => {
+                attributeInput.value = option.textContent || '';
+                attributeDropdown.style.display = 'none';
+                console.log(`Attribute Type updated to: ${attributeInput.value}`);
+                
+                const selectedAttribute = attributeInput.value;
+                const attributeValues = attributes.attributes.find(attr => attr.Type === selectedAttribute)?.values || [];
+                
+                attributeValueDropdown.innerHTML = '';
+                
+                attributeValues.forEach(value => {
+                    const valueOption = document.createElement('div');
+                    valueOption.className = 'attribute-value-option';
+                    valueOption.textContent = value;
+                    valueOption.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        attributeValueInput.value = value;
+                        attributeValueDropdown.style.display = 'none';
+                        console.log(`Attribute Value updated to: ${value}`);
+                    });
+                    attributeValueDropdown.appendChild(valueOption);
+                });
+
+                attributeValueInput.value = '';
+                updateAssetCell(selectedAttribute);
+            });
+        });
+
+        // Show attribute value dropdown
+        attributeValueInput.addEventListener('click', () => {
+            attributeValueDropdown.style.display = 'block';
+        });
+
+        // Hide attribute value dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!attributeValueInput.contains(e.target) && !attributeValueDropdown.contains(e.target)) {
+                attributeValueDropdown.style.display = 'none';
+            }
+        });
+
+        // Filter attribute value options
+        attributeValueInput.addEventListener('input', () => {
+            const filter = attributeValueInput.value.toLowerCase();
+            const options = attributeValueDropdown.querySelectorAll('.attribute-value-option');
+            options.forEach(option => {
+                const text = option.textContent.toLowerCase();
+                option.style.display = text.includes(filter) ? 'block' : 'none';
+            });
+            attributeValueDropdown.style.display = 'block';
+        });
+
+        // Asset cell functionality
+        function updateAssetCell(attributeType) {
+            if (attributeType.toLowerCase() === 'color') {
+                assetPreview.innerHTML = '';
+                assetPreview.style.backgroundColor = '#f8f8f8'; // Default color
+                assetPreview.addEventListener('click', () => colorPicker.click());
+                colorPicker.style.display = 'none';
+                fileUpload.style.display = 'none';
+            } else {
+                assetPreview.innerHTML = '<span class="upload-icon">+</span>';
+                assetPreview.style.backgroundColor = '#f8f8f8';
+                assetPreview.addEventListener('click', () => fileUpload.click());
+                colorPicker.style.display = 'none';
+                fileUpload.style.display = 'none';
             }
         }
 
-        if (optionsCell) {
-            optionsCell.addEventListener('click', toggleOptions);
+        colorPicker.addEventListener('change', (e) => {
+            assetPreview.style.backgroundColor = e.target.value;
+            console.log(`Color Asset updated to: ${e.target.value}`);
+        });
 
-            optionsCell.addEventListener('keydown', function(e) {
-                if (e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    toggleOptions();
-                }
-            });
+        fileUpload.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+
+                reader.onload = (event) => {
+                    if (file.type.startsWith('image/')) {
+                        assetPreview.innerHTML = `<img src="${event.target.result}" alt="Uploaded asset">`;
+                        assetPreview.style.backgroundColor = 'transparent';
+                    } else {
+                        assetPreview.innerHTML = `<span>${getFileIcon(file.type)}</span>`;
+                        assetPreview.style.backgroundColor = '#f8f8f8';
+                    }
+                };
+
+                reader.readAsDataURL(file);
+                console.log(`Asset updated to: ${file.name}`);
+                // Here you can add code to handle the file upload, e.g., send to a server
+            }
+        });
+
+        function getFileIcon(fileType) {
+            if (fileType.includes('pdf')) return '📄';
+            if (fileType.includes('doc')) return '📝';
+            if (fileType.includes('xls')) return '📊';
+            return '📁'; // default icon for other file types
         }
     </script>
 </body>
