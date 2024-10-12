@@ -12,22 +12,32 @@ import '../../styles/global.css';
 </head>
 <body class="bg-white text-gray-900 font-sans p-6">
     <div class="max-w-4xl mx-auto">
+        <h2 class="text-lg font-bold mb-2">Core</h2>
         <div class="border border-gray-200 rounded-lg overflow-hidden">
             <table id="coreTable" class="w-full border-collapse">
+                <!-- Remove or comment out the thead section -->
+                <!-- 
                 <thead>
                     <tr class="border-b border-gray-200">
                         <th class="text-left py-2 px-4 font-medium text-gray-600 w-1/3 border-r border-gray-200">Property</th>
                         <th class="text-left py-2 px-4 font-medium text-gray-600 w-2/3">Value</th>
                     </tr>
                 </thead>
+                -->
+                <thead class="visually-hidden">
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left py-2 px-4 font-medium text-gray-600 w-1/4 border-r border-gray-200">Property</th>
+                        <th class="text-left py-2 px-4 font-medium text-gray-600 w-3/4">Value</th>
+                    </tr>
+                </thead>
                 <tbody>
                     <tr class="border-b border-gray-200">
-                        <td class="py-2 px-4 font-medium border-r border-gray-200">Name</td>
-                        <td class="py-2 px-4" contenteditable="true" data-max-length="50"></td>
+                        <td class="py-2 px-4 font-medium border-r border-gray-200 w-1/4">Name</td>
+                        <td class="py-2 px-4 w-3/4" contenteditable="true" data-max-length="50"></td>
                     </tr>
                     <tr class="border-b border-gray-200">
-                        <td class="py-2 px-4 font-medium border-r border-gray-200">Category</td>
-                        <td class="py-2 px-4 category-wrapper">
+                        <td class="py-2 px-4 font-medium border-r border-gray-200 w-1/4">Category</td>
+                        <td class="py-2 px-4 category-wrapper w-3/4">
                             <input type="text" class="w-full focus:outline-none bg-transparent" placeholder="Select a category">
                             <div class="category-dropdown hidden absolute bg-white shadow-md rounded-md mt-1 max-h-48 overflow-y-auto">
                                 {categories.categories.map((category) => (
@@ -83,6 +93,7 @@ import '../../styles/global.css';
                 </tbody>
             </table>
         </div>
+        <h2 id="instancesHeader" class="text-lg font-bold mt-4">Instances</h2>
     </div>
 
     <!-- Bottom Sheet -->
@@ -98,6 +109,20 @@ import '../../styles/global.css';
             </div>
             <div id="bottomSheetContent" class="max-h-64 overflow-y-auto">
                 <!-- Values will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Dialog -->
+    <div id="confirmDialog" class="fixed inset-x-0 bottom-0 bg-white shadow-md rounded-t-xl transform translate-y-full transition-transform duration-300 ease-in-out z-50">
+        <div class="p-4">
+            <p class="text-center mb-4">
+                Are you sure you want to decrease<br>
+                the number of options?
+            </p>
+            <div class="flex justify-center space-x-4">
+                <button id="confirmYes" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Yes</button>
+                <button id="confirmNo" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">No</button>
             </div>
         </div>
     </div>
@@ -373,13 +398,22 @@ import '../../styles/global.css';
         const typeSelectorCell = document.getElementById('typeSelectorCell');
         const typeOptions = ['Item', 'Variants', 'Service'];
         let currentTypeIndex = 0;
+        const instancesHeader = document.getElementById('instancesHeader');
+
+        function updateInstancesHeader() {
+            instancesHeader.textContent = typeOptions[currentTypeIndex] === 'Item' ? 'Instance' : 'Instances';
+        }
 
         typeSelectorCell.addEventListener('click', () => {
             currentTypeIndex = (currentTypeIndex + 1) % typeOptions.length;
             typeSelector.textContent = typeOptions[currentTypeIndex];
+            updateInstancesHeader();
             console.log(`Selected Type: ${typeOptions[currentTypeIndex]}`);
             // Here you can add code to save the changes, e.g., send to a server
         });
+
+        // Initialize the header text
+        updateInstancesHeader();
 
         // Options selector functionality
         const optionsSelector = document.getElementById('optionsSelector');
@@ -390,6 +424,11 @@ import '../../styles/global.css';
         let currentOptionsIndex = 0;
         const optionRows = document.querySelectorAll('.option-row');
 
+        // Confirmation dialog elements
+        const confirmDialog = document.getElementById('confirmDialog');
+        const confirmYes = document.getElementById('confirmYes');
+        const confirmNo = document.getElementById('confirmNo');
+
         function updateOptionRowsVisibility(value) {
             optionRows.forEach((row, index) => {
                 row.style.display = index < value ? 'table-row' : 'none';
@@ -397,22 +436,46 @@ import '../../styles/global.css';
         }
 
         function updateOptionsValue(change) {
-            currentOptionsIndex = (currentOptionsIndex + change + optionsValues.length) % optionsValues.length;
-            const selectedValue = optionsValues[currentOptionsIndex];
-            optionsSelector.textContent = selectedValue;
-            updateOptionRowsVisibility(selectedValue);
-            console.log(`Selected Option: ${selectedValue}`);
-            // Here you can add code to save the changes, e.g., send to a server
+            const newIndex = currentOptionsIndex + change;
+            if (newIndex >= 0 && newIndex < optionsValues.length) {
+                currentOptionsIndex = newIndex;
+                const selectedValue = optionsValues[currentOptionsIndex];
+                optionsSelector.textContent = selectedValue;
+                updateOptionRowsVisibility(selectedValue);
+                console.log(`Selected Option: ${selectedValue}`);
+                // Here you can add code to save the changes, e.g., send to a server
+            }
+        }
+
+        function showConfirmDialog() {
+            confirmDialog.classList.remove('translate-y-full');
+        }
+
+        function hideConfirmDialog() {
+            confirmDialog.classList.add('translate-y-full');
         }
 
         optionsDecrease.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (currentOptionsIndex > 0) {
+                showConfirmDialog();
+            }
+        });
+
+        confirmYes.addEventListener('click', () => {
             updateOptionsValue(-1);
+            hideConfirmDialog();
+        });
+
+        confirmNo.addEventListener('click', () => {
+            hideConfirmDialog();
         });
 
         optionsIncrease.addEventListener('click', (e) => {
             e.stopPropagation();
-            updateOptionsValue(1);
+            if (currentOptionsIndex < optionsValues.length - 1) {
+                updateOptionsValue(1);
+            }
         });
 
         // Initialize option rows visibility
@@ -583,6 +646,22 @@ import '../../styles/global.css';
 
         #optionsSelector {
             pointer-events: none; /* Allows clicks to pass through to the underlying divs */
+        }
+
+        #confirmDialog {
+            max-height: 80vh;
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
         }
     </style>
 </body>
