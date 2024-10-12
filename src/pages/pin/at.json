@@ -35,10 +35,6 @@
     {
       "Type": "Occasion",
       "values": ["Everyday", "Work", "Party", "Wedding", "Beach", "Gym", "Travel", "Date Night", "Outdoor", "Lounge"]
-    },
-    {
-      "Type": "Type",
-      "values": ["Spring", "Summer", "Fall", "Winter", "All Season", "Resort", "Holiday", "Back to School", "Festival", "Transitional"]
     }
   ]
 }

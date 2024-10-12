@@ -1,6 +1,7 @@
 ---
 import categories from './cat.json';
 import attributes from './at.json';
+import '../../styles/global.css';
 ---
 
 <html lang="en">
@@ -8,360 +9,118 @@ import attributes from './at.json';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Core Database</title>
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-            font-family: Arial, sans-serif;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        .property {
-            color: #333;
-            width: 25%;
-        }
-        .value {
-            color: #000;
-            width: 75%;
-        }
-        .value:focus {
-            outline: none;
-            background-color: #f8f8f8;
-        }
-        .type-toggle {
-            cursor: pointer;
-        }
-        .category-wrapper {
-            position: relative;
-        }
-        .category-input {
-            width: 100%;
-            padding: 0;
-            border: none;
-            background-color: transparent;
-            font-size: inherit;
-            font-family: inherit;
-            color: inherit;
-            cursor: pointer;
-        }
-        .category-input:focus {
-            outline: none;
-        }
-        .category-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background-color: white;
-            border: 1px solid #ddd;
-            max-height: 150px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-        }
-        .category-option {
-            padding: 8px;
-            cursor: pointer;
-        }
-        .category-option:hover {
-            background-color: #f0f0f0;
-        }
-        .media-cell {
-            position: relative;
-        }
-        .media-preview {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-        .media-item {
-            width: 32px;
-            height: 32px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f8f8f8;
-        }
-        .media-item img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: cover;
-        }
-        .media-item span {
-            font-size: 20px;
-            line-height: 32px;
-        }
-        .media-upload {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            background-color: #f0f0f0;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        .media-upload input {
-            display: none;
-        }
-        .add-icon {
-            font-size: 24px;
-            line-height: 1;
-            color: #666;
-        }
-        .media-trigger {
-            cursor: pointer;
-        }
-        .media-trigger:hover {
-            background-color: #f0f0f0;
-        }
-        .attribute-wrapper {
-            position: relative;
-        }
-        .attribute-input {
-            width: 100%;
-            padding: 0;
-            border: none;
-            background-color: transparent;
-            font-size: inherit;
-            font-family: inherit;
-            color: inherit;
-            cursor: pointer;
-        }
-        .attribute-input:focus {
-            outline: none;
-        }
-        .attribute-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background-color: white;
-            border: 1px solid #ddd;
-            max-height: 150px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-        }
-        .attribute-option {
-            padding: 8px;
-            cursor: pointer;
-        }
-        .attribute-option:hover {
-            background-color: #f0f0f0;
-        }
-
-        /* Updated Bottomsheet styles */
-        .bottomsheet {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: white;
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            transform: translateY(100%);
-            transition: transform 0.3s ease-out;
-            z-index: 1000;
-            height: 70vh; /* Set height to 70% of viewport height */
-            display: flex;
-            flex-direction: column;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            padding-top: 16px;
-        }
-
-        .bottomsheet.active {
-            transform: translateY(0);
-        }
-
-        .bottomsheet-content {
-            padding: 48px 16px 16px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .search-bar {
-            display: flex;
-            align-items: center;
-            padding: 8px 16px;
-            background-color: #f1f3f4;
-            border-radius: 24px;
-            margin-bottom: 16px;
-        }
-
-        .search-icon {
-            width: 20px;
-            height: 20px;
-            color: #5f6368;
-        }
-
-        .search-input {
-            border: none;
-            background: transparent;
-            font-size: 16px;
-            color: #202124;
-            width: 100%;
-            margin-left: 12px;
-            padding: 8px 0;
-        }
-
-        .search-input::placeholder {
-            color: #5f6368;
-        }
-
-        .search-input:focus {
-            outline: none;
-        }
-
-        .options-list {
-            flex-grow: 1;
-            overflow-y: auto;
-        }
-
-        .option-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            border-bottom: 1px solid #e0e0e0; /* Light-weight divider */
-        }
-
-        .option-item:last-child {
-            border-bottom: none; /* Remove border from last item */
-        }
-
-        .option-item:hover, .option-item.selected {
-            background-color: #f5f5f5;
-        }
-
-        .option-name {
-            font-size: 16px;
-            color: #202124;
-        }
-
-        .option-item.last-item {
-            border-bottom: none;
-        }
-
-        /* Add these new styles for the close button */
-        .bottomsheet-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #5f6368; /* Changed to a grey color */
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-        }
-
-        .bottomsheet-close:hover {
-            color: #202124; /* Darker grey on hover for subtle effect */
-        }
-    </style>
 </head>
-<body>
-    <table id="coreTable">
-        <thead>
-            <tr>
-                <th class="property">Property</th>
-                <th class="value">Value</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="property">Name</td>
-                <td class="value" contenteditable="true" data-max-length="50"></td>
-            </tr>
-            <tr>
-                <td class="property">Type</td>
-                <td class="value type-toggle" tabindex="0">Item</td>
-            </tr>
-            <tr>
-                <td class="property">Category</td>
-                <td class="value category-wrapper">
-                    <input type="text" class="category-input" placeholder="Select a category">
-                    <div class="category-dropdown">
-                        {categories.categories.map((category) => (
-                            <div class="category-option" data-value={category}>{category}</div>
-                        ))}
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="property media-trigger">Medias</td>
-                <td class="value media-cell">
-                    <div class="media-preview"></div>
-                    <input type="file" id="mediaInput" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" style="display: none;">
-                </td>
-            </tr>
-            <tr>
-                <td class="property">Notes</td>
-                <td class="value" contenteditable="true"></td>
-            </tr>
-        </tbody>
-    </table>
-
-    <!-- New Options table -->
-    <table id="optionsTable" style="margin-top: 20px;">
-        <thead>
-            <tr>
-                <th class="property">Attributes</th>
-                <th class="value">Values</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Initial row with attribute dropdown -->
-            <tr>
-                <td class="property attribute-wrapper">
-                    <input type="text" class="attribute-input" placeholder="Select an attribute">
-                    <div class="attribute-dropdown">
-                        {attributes.attributes.map((attr) => (
-                            <div class="attribute-option" data-value={attr.Type}>{attr.Type}</div>
-                        ))}
-                    </div>
-                </td>
-                <td class="value" contenteditable="true"></td>
-            </tr>
-        </tbody>
-    </table>
-
-    <!-- Bottomsheet for Values -->
-    <div id="valuesBottomsheet" class="bottomsheet">
-        <button class="bottomsheet-close">Close</button>
-        <div class="bottomsheet-content">
-            <div class="search-bar">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="text" class="search-input" placeholder="Search">
-            </div>
-            <div id="valueOptions" class="options-list"></div>
+<body class="bg-white text-gray-900 font-sans p-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="border border-gray-200 rounded-lg overflow-hidden">
+            <table id="coreTable" class="w-full border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left py-2 px-4 font-medium text-gray-600 w-1/3 border-r border-gray-200">Property</th>
+                        <th class="text-left py-2 px-4 font-medium text-gray-600 w-2/3">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-gray-200">
+                        <td class="py-2 px-4 font-medium border-r border-gray-200">Name</td>
+                        <td class="py-2 px-4" contenteditable="true" data-max-length="50"></td>
+                    </tr>
+                    <tr class="border-b border-gray-200">
+                        <td class="py-2 px-4 font-medium border-r border-gray-200">Category</td>
+                        <td class="py-2 px-4 category-wrapper">
+                            <input type="text" class="w-full focus:outline-none bg-transparent" placeholder="Select a category">
+                            <div class="category-dropdown hidden absolute bg-white shadow-md rounded-md mt-1 max-h-48 overflow-y-auto">
+                                {categories.categories.map((category) => (
+                                    <div class="py-2 px-4 hover:bg-gray-100 cursor-pointer" data-value={category}>{category}</div>
+                                ))}
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="border-b border-gray-200">
+                        <td class="py-2 px-4 font-medium border-r border-gray-200">Medias</td>
+                        <td class="py-2 px-4 media-cell cursor-pointer transition-colors duration-200">
+                            <input type="file" id="mediaInput" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" class="hidden">
+                            <div class="media-preview flex flex-wrap gap-2"></div>
+                        </td>
+                    </tr>
+                    <tr class="border-b border-gray-200">
+                        <td class="py-2 px-4 font-medium border-r border-gray-200">Notes</td>
+                        <td class="py-2 px-4" contenteditable="true"></td>
+                    </tr>
+                    <tr class="border-b border-gray-200">
+                        <td class="py-2 px-4 font-medium border-r border-gray-200 type-wrapper">
+                            <input type="text" class="w-full focus:outline-none bg-transparent type-input" placeholder="Select a type">
+                            <div class="type-dropdown hidden absolute bg-white shadow-md rounded-md mt-1 max-h-48 overflow-y-auto z-10">
+                                {attributes.attributes.map((attr) => (
+                                    <div class="py-2 px-4 hover:bg-gray-100 cursor-pointer" data-value={attr.Type}>{attr.Type}</div>
+                                ))}
+                            </div>
+                        </td>
+                        <td class="py-2 px-4">
+                            <input type="text" class="w-full focus:outline-none bg-transparent type-value-input" placeholder="Enter a value">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <script define:vars={{ attributes }}>
+    <script define:vars={{ attributes, categories }}>
+        function setupDropdown(inputSelector, dropdownSelector, optionsSelector) {
+            const input = document.querySelector(inputSelector);
+            const dropdown = document.querySelector(dropdownSelector);
+            const options = document.querySelectorAll(optionsSelector);
+            const wrapper = input.closest('.category-wrapper, .type-wrapper');
+
+            input.addEventListener('focus', () => {
+                dropdown.classList.remove('hidden');
+                dropdown.style.width = `${wrapper.offsetWidth}px`;
+                
+                // Position the dropdown
+                const rect = wrapper.getBoundingClientRect();
+                dropdown.style.top = `${rect.bottom}px`;
+                dropdown.style.left = `${rect.left}px`;
+            });
+
+            input.addEventListener('blur', () => {
+                setTimeout(() => {
+                    dropdown.classList.add('hidden');
+                }, 200);
+            });
+
+            input.addEventListener('input', () => {
+                const filter = input.value.toLowerCase();
+                options.forEach((option) => {
+                    const text = option.textContent.toLowerCase();
+                    option.style.display = text.includes(filter) ? 'block' : 'none';
+                });
+            });
+
+            options.forEach((option) => {
+                option.addEventListener('click', () => {
+                    input.value = option.textContent;
+                    dropdown.classList.add('hidden');
+                    
+                    if (inputSelector === '.type-input') {
+                        const typeValue = input.closest('tr').querySelector('.type-value-input');
+                        if (typeValue) {
+                            typeValue.placeholder = `Enter a ${input.value}`;
+                        }
+                    }
+                });
+            });
+        }
+
+        // Setup Category dropdown
+        setupDropdown('.category-wrapper input', '.category-dropdown', '.category-dropdown div');
+
+        // Setup Type dropdown
+        setupDropdown('.type-input', '.type-dropdown', '.type-dropdown div');
+
         const coreTable = document.getElementById('coreTable');
 
         // Name field character limit
-        const nameCell = document.querySelector('.value[data-max-length]');
+        const nameCell = document.querySelector('[data-max-length]');
         if (nameCell) {
             nameCell.addEventListener('input', function() {
                 const maxLength = parseInt(this.getAttribute('data-max-length') || '50');
@@ -371,67 +130,8 @@ import attributes from './at.json';
             });
         }
 
-        // Type toggle functionality
-        const typeCell = document.querySelector('.type-toggle');
-        const typeOptions = ['Item', 'Variants', 'Service'];
-        let currentTypeIndex = 0;
-
-        function toggleType() {
-            currentTypeIndex = (currentTypeIndex + 1) % typeOptions.length;
-            if (typeCell) {
-                typeCell.textContent = typeOptions[currentTypeIndex];
-            }
-        }
-
-        if (typeCell) {
-            typeCell.addEventListener('click', toggleType);
-
-            typeCell.addEventListener('keydown', function(e) {
-                if (e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    toggleType();
-                }
-            });
-        }
-
-        // Category dropdown functionality
-        const categoryInput = document.querySelector('.category-input');
-        const categoryDropdown = document.querySelector('.category-dropdown');
-        const categoryOptions = document.querySelectorAll('.category-option');
-
-        categoryInput.addEventListener('focus', () => {
-            categoryDropdown.style.display = 'block';
-        });
-
-        categoryInput.addEventListener('blur', () => {
-            setTimeout(() => {
-                categoryDropdown.style.display = 'none';
-            }, 200);
-        });
-
-        categoryInput.addEventListener('input', () => {
-            const filter = categoryInput.value.toLowerCase();
-            categoryOptions.forEach((option) => {
-                const text = option.textContent?.toLowerCase();
-                if (text && text.includes(filter)) {
-                    option.style.display = 'block';
-                } else {
-                    option.style.display = 'none';
-                }
-            });
-        });
-
-        categoryOptions.forEach((option) => {
-            option.addEventListener('click', () => {
-                categoryInput.value = option.textContent || '';
-                categoryDropdown.style.display = 'none';
-                console.log(`Category updated to: ${categoryInput.value}`);
-                // Here you can add code to save the changes, e.g., send to a server
-            });
-        });
-
         // Logging changes for other fields
-        document.querySelectorAll('.value:not(.category-wrapper):not(.option1-wrapper)').forEach(cell => {
+        document.querySelectorAll('td[contenteditable="true"]').forEach(cell => {
             cell.addEventListener('blur', function() {
                 const previousSibling = this.previousElementSibling;
                 if (previousSibling && previousSibling.textContent && this.textContent) {
@@ -442,16 +142,36 @@ import attributes from './at.json';
         });
 
         // Media upload functionality
-        const mediaTrigger = document.querySelector('.media-trigger');
+        const mediaCell = document.querySelector('.media-cell');
         const mediaInput = document.getElementById('mediaInput');
         const mediaPreview = document.querySelector('.media-preview');
 
-        mediaTrigger.addEventListener('click', () => {
+        mediaCell.addEventListener('click', () => {
             mediaInput.click();
+        });
+
+        mediaCell.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            mediaCell.classList.add('bg-gray-200');
+        });
+
+        mediaCell.addEventListener('dragleave', () => {
+            mediaCell.classList.remove('bg-gray-200');
+        });
+
+        mediaCell.addEventListener('drop', (e) => {
+            e.preventDefault();
+            mediaCell.classList.remove('bg-gray-200');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
         });
 
         mediaInput.addEventListener('change', (event) => {
             const files = event.target.files;
+            handleFiles(files);
+        });
+
+        function handleFiles(files) {
             if (files) {
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
@@ -459,7 +179,7 @@ import attributes from './at.json';
 
                     reader.onload = (e) => {
                         const mediaItem = document.createElement('div');
-                        mediaItem.className = 'media-item';
+                        mediaItem.className = 'media-item inline-flex items-center justify-center overflow-hidden';
                         mediaItem.style.width = '32px';
                         mediaItem.style.height = '32px';
 
@@ -467,13 +187,13 @@ import attributes from './at.json';
                             const img = document.createElement('img');
                             img.src = e.target.result;
                             img.alt = file.name;
-                            img.style.width = '32px';
-                            img.style.height = '32px';
+                            img.className = 'w-full h-full object-cover';
                             mediaItem.appendChild(img);
                         } else {
-                            const fileIcon = document.createElement('span');
-                            fileIcon.textContent = getFileIcon(file.type);
-                            mediaItem.appendChild(fileIcon);
+                            const icon = document.createElement('span');
+                            icon.textContent = getFileIcon(file.type);
+                            icon.className = 'text-xl';
+                            mediaItem.appendChild(icon);
                         }
 
                         mediaPreview.appendChild(mediaItem);
@@ -485,172 +205,103 @@ import attributes from './at.json';
                 console.log(`Medias updated: ${files.length} file(s) added`);
                 // Here you can add code to save the changes, e.g., send to a server
             }
-        });
+        }
 
-        // Add this function to determine the appropriate icon
         function getFileIcon(fileType) {
             if (fileType.includes('pdf')) return '📄';
             if (fileType.includes('doc')) return '📝';
             if (fileType.includes('xls')) return '📊';
             return '📁'; // default icon for other file types
         }
-
-        // Add functionality for the new Options table
-        const optionsTable = document.getElementById('optionsTable');
-
-        // Function to add a new row
-        const addOptionRow = () => {
-            const newRow = optionsTable.insertRow(-1);
-            const attributeCell = newRow.insertCell(0);
-            const valueCell = newRow.insertCell(1);
-            
-            attributeCell.className = 'property attribute-wrapper';
-            valueCell.className = 'value';
-
-            // Clone the attribute input and dropdown from the first row
-            const attributeWrapper = optionsTable.rows[1].cells[0].cloneNode(true);
-            attributeCell.appendChild(attributeWrapper);
-            valueCell.textContent = 'Click to select values';
-
-            // Add event listeners for the new row
-            setupAttributeListeners(attributeCell, valueCell);
-        };
-
-        // Function to setup attribute listeners
-        const setupAttributeListeners = (attributeCell, valueCell) => {
-            const attributeInput = attributeCell.querySelector('.attribute-input');
-            const attributeDropdown = attributeCell.querySelector('.attribute-dropdown');
-            const attributeOptions = attributeCell.querySelectorAll('.attribute-option');
-            const bottomsheet = document.getElementById('valuesBottomsheet');
-            const bottomsheetContent = bottomsheet.querySelector('.bottomsheet-content');
-            const valueOptions = document.getElementById('valueOptions');
-            const searchBar = bottomsheet.querySelector('.search-input');
-
-            attributeInput.addEventListener('focus', () => {
-                attributeDropdown.style.display = 'block';
-            });
-
-            attributeInput.addEventListener('blur', () => {
-                setTimeout(() => {
-                    attributeDropdown.style.display = 'none';
-                }, 200);
-            });
-
-            attributeInput.addEventListener('input', () => {
-                const filter = attributeInput.value.toLowerCase();
-                attributeOptions.forEach((option) => {
-                    const text = option.textContent.toLowerCase();
-                    if (text.includes(filter)) {
-                        option.style.display = 'block';
-                    } else {
-                        option.style.display = 'none';
-                    }
-                });
-            });
-
-            attributeOptions.forEach((option) => {
-                option.addEventListener('click', () => {
-                    attributeInput.value = option.textContent;
-                    attributeDropdown.style.display = 'none';
-                    console.log(`Attribute updated to: ${attributeInput.value}`);
-                    
-                    valueCell.textContent = 'Click to select values';
-                    valueCell.addEventListener('click', () => openBottomsheet(attributeInput.value));
-                });
-            });
-
-            valueCell.addEventListener('click', () => {
-                if (attributeInput.value) {
-                    openBottomsheet(attributeInput.value);
-                }
-            });
-
-            function openBottomsheet(attributeType) {
-                console.log(`Opening bottomsheet for ${attributeType}`);
-                bottomsheet.classList.add('active');
-                populateBottomsheet(attributeType);
-            }
-
-            function closeBottomsheet() {
-                console.log('Closing bottomsheet');
-                bottomsheet.classList.remove('active');
-            }
-
-            function populateBottomsheet(attributeType) {
-                console.log(`Populating bottomsheet for ${attributeType}`);
-                console.log('Attributes:', attributes);
-                const selectedAttribute = attributes.attributes.find(attr => attr.Type === attributeType);
-                console.log('Selected attribute:', selectedAttribute);
-                if (selectedAttribute) {
-                    valueOptions.innerHTML = '';
-                    selectedAttribute.values.forEach(value => {
-                        const option = document.createElement('div');
-                        option.className = 'option-item';
-                        option.innerHTML = `
-                            <span class="option-name">${value}</span>
-                        `;
-                        option.addEventListener('click', function() {
-                            this.classList.toggle('selected');
-                        });
-                        valueOptions.appendChild(option);
-                    });
-
-                    // Add search functionality here
-                    const searchInput = bottomsheet.querySelector('.search-input');
-                    searchInput.addEventListener('input', function() {
-                        const filter = this.value.toLowerCase();
-                        const options = valueOptions.querySelectorAll('.option-item');
-                        options.forEach(option => {
-                            const name = option.querySelector('.option-name').textContent.toLowerCase();
-                            if (name.includes(filter)) {
-                                option.style.display = '';
-                            } else {
-                                option.style.display = 'none';
-                            }
-                        });
-                    });
-                } else {
-                    console.log(`Attribute ${attributeType} not found`);
-                }
-            }
-
-            function getRandomStatus() {
-                const statuses = ['online', 'offline', 'busy', 'error', 'special'];
-                return statuses[Math.floor(Math.random() * statuses.length)];
-            }
-
-            function capitalizeFirstLetter(string) {
-                return string.charAt(0).toUpperCase() + string.slice(1);
-            }
-
-            bottomsheet.querySelector('.bottomsheet-close').addEventListener('click', closeBottomsheet);
-
-            searchBar.addEventListener('input', function() {
-                const filter = this.value.toLowerCase();
-                const options = valueOptions.querySelectorAll('.option-item');
-                options.forEach(option => {
-                    const name = option.querySelector('.option-name').textContent.toLowerCase();
-                    if (name.includes(filter)) {
-                        option.style.display = '';
-                    } else {
-                        option.style.display = 'none';
-                    }
-                });
-            });
-        };
-
-        // Setup listeners for the initial row
-        setupAttributeListeners(optionsTable.rows[1].cells[0], optionsTable.rows[1].cells[1]);
-
-        // Add a new row when the last row is being edited
-        optionsTable.addEventListener('input', (event) => {
-            const target = event.target;
-            if (target.closest('tr') === optionsTable.rows[optionsTable.rows.length - 1]) {
-                addOptionRow();
-            }
-        });
-
-        console.log('Script executed');
     </script>
+
+    <style>
+        .media-cell {
+            min-height: 40px; /* Adjust as needed */
+        }
+        .media-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .media-item {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: #f3f4f6; /* Light gray background for non-image files */
+        }
+        /* Remove the default focus outline for all cells */
+        td:focus {
+            outline: none;
+        }
+        /* Add a subtle background color change on hover for all rows */
+        tr:hover td {
+            background-color: #f9fafb;
+        }
+        /* Remove these styles as we're now using Tailwind classes */
+        /*
+        .type-select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a0aec0'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+        .type-wrapper::after {
+            content: none;
+        }
+        */
+        .type-select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: none;
+        }
+
+        .type-select::-ms-expand {
+            display: none;
+        }
+
+        /* Hide the arrow in WebKit browsers */
+        .type-select::-webkit-select-placeholder {
+            color: transparent;
+        }
+
+        /* Hide the arrow in Firefox */
+        .type-select:-moz-focusring {
+            color: transparent;
+            text-shadow: 0 0 0 #000;
+        }
+
+        /* Style for the placeholder option */
+        .type-select option[value=""] {
+            color: #9CA3AF;
+        }
+
+        /* Style for other options */
+        .type-select option:not([value=""]) {
+            color: #374151;
+        }
+
+        /* Add these new styles */
+        .category-wrapper,
+        .type-wrapper {
+            position: relative;
+        }
+
+        .category-dropdown,
+        .type-dropdown {
+            position: fixed;
+            width: 100%;
+            left: 0;
+            z-index: 1000;
+        }
+    </style>
 </body>
 </html>
