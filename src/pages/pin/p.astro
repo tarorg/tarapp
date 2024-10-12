@@ -9,91 +9,101 @@ import '../../styles/global.css';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Core Database</title>
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/header@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/list@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/paragraph@latest"></script>
 </head>
 <body class="bg-white text-gray-900 font-sans p-6">
     <div class="max-w-4xl mx-auto">
-        <h2 class="text-lg font-bold mb-2">Core</h2>
-        <div class="border border-gray-200 rounded-lg overflow-hidden">
-            <table id="coreTable" class="w-full border-collapse">
-                <!-- Remove or comment out the thead section -->
-                <!-- 
-                <thead>
-                    <tr class="border-b border-gray-200">
-                        <th class="text-left py-2 px-4 font-medium text-gray-600 w-1/3 border-r border-gray-200">Property</th>
-                        <th class="text-left py-2 px-4 font-medium text-gray-600 w-2/3">Value</th>
-                    </tr>
-                </thead>
-                -->
-                <thead class="visually-hidden">
-                    <tr class="border-b border-gray-200">
-                        <th class="text-left py-2 px-4 font-medium text-gray-600 w-1/4 border-r border-gray-200">Property</th>
-                        <th class="text-left py-2 px-4 font-medium text-gray-600 w-3/4">Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="border-b border-gray-200">
-                        <td class="py-2 px-4 font-medium border-r border-gray-200 w-1/4">Name</td>
-                        <td class="py-2 px-4 w-3/4" contenteditable="true" data-max-length="50"></td>
-                    </tr>
-                    <tr class="border-b border-gray-200">
-                        <td class="py-2 px-4 font-medium border-r border-gray-200 w-1/4">Category</td>
-                        <td class="py-2 px-4 category-wrapper w-3/4">
-                            <input type="text" class="w-full focus:outline-none bg-transparent" placeholder="Select a category">
-                            <div class="category-dropdown hidden absolute bg-white shadow-md rounded-md mt-1 max-h-48 overflow-y-auto">
-                                {categories.categories.map((category) => (
-                                    <div class="py-2 px-4 hover:bg-gray-100 cursor-pointer" data-value={category}>{category}</div>
-                                ))}
-                            </div>
-                        </td>
-                    </tr>
-                    <tr class="border-b border-gray-200">
-                        <td class="py-2 px-4 font-medium border-r border-gray-200">Medias</td>
-                        <td class="py-2 px-4 media-cell cursor-pointer transition-colors duration-200">
-                            <input type="file" id="mediaInput" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" class="hidden">
-                            <div class="media-preview flex flex-wrap gap-2"></div>
-                        </td>
-                    </tr>
-                    <tr class="border-b border-gray-200">
-                        <td class="py-2 px-4 font-medium border-r border-gray-200">Type</td>
-                        <td class="py-2 px-4 cursor-pointer" id="typeSelectorCell">
-                            <div id="typeSelector" class="inline-block">Item</div>
-                        </td>
-                    </tr>
-                    <tr class="border-b border-gray-200">
-                        <td class="py-2 px-4 font-medium border-r border-gray-200">Notes</td>
-                        <td class="py-2 px-4" contenteditable="true"></td>
-                    </tr>
-                    <tr class="border-b border-gray-200">
-                        <td class="py-2 px-4 font-medium border-r border-gray-200">Options</td>
-                        <td class="py-2 px-4 cursor-pointer relative" id="optionsSelectorCell">
-                            <div class="absolute inset-0 flex">
-                                <div class="w-1/2 h-full" id="optionsDecrease"></div>
-                                <div class="w-1/2 h-full" id="optionsIncrease"></div>
-                            </div>
-                            <div id="optionsSelector" class="text-center">1</div>
-                        </td>
-                    </tr>
-                    <!-- The highlighted row has been removed -->
-                    <!-- 6 Option rows -->
-                    {[...Array(6)].map((_, index) => (
-                        <tr class="border-b border-gray-200 option-row" style="display: none;">
-                            <td class="py-2 px-4 font-medium border-r border-gray-200 type-wrapper">
-                                <input type="text" class="w-full focus:outline-none bg-transparent type-input" placeholder="Type">
-                                <div class="type-dropdown hidden absolute bg-white shadow-md rounded-md mt-1 max-h-48 overflow-y-auto z-10">
-                                    {attributes.attributes.map((attr) => (
-                                        <div class="py-2 px-4 hover:bg-gray-100 cursor-pointer" data-value={attr.Type}>{attr.Type}</div>
-                                    ))}
-                                </div>
-                            </td>
-                            <td class="py-2 px-4">
-                                <input type="text" class="w-full focus:outline-none bg-transparent type-value-input" readonly>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+        <div class="w-full">
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <div id="accordionHeader" class="flex items-center justify-between p-4 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
+                    <h1 id="pageTitle" class="text-3xl font-bold">Product name</h1>
+                    <svg id="accordionIcon" class="w-6 h-6 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+                <div id="accordionContent" class="hidden">
+                    <table id="coreTable" class="w-full border-collapse">
+                        <thead class="visually-hidden">
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-2 px-4 font-medium text-gray-600 w-1/4 border-r border-gray-200">Property</th>
+                                <th class="text-left py-2 px-4 font-medium text-gray-600 w-3/4">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-200">
+                                <td class="py-2 px-4 font-medium border-r border-gray-200 w-1/4">Name</td>
+                                <td class="py-2 px-4 w-3/4" contenteditable="true" data-max-length="50" id="nameField"></td>
+                            </tr>
+                            <tr class="border-b border-gray-200">
+                                <td class="py-2 px-4 font-medium border-r border-gray-200 w-1/4">Category</td>
+                                <td class="py-2 px-4 category-wrapper w-3/4">
+                                    <input type="text" class="w-full focus:outline-none bg-transparent" placeholder="Select a category">
+                                    <div class="category-dropdown hidden absolute bg-white shadow-md rounded-md mt-1 max-h-48 overflow-y-auto">
+                                        {categories.categories.map((category) => (
+                                            <div class="py-2 px-4 hover:bg-gray-100 cursor-pointer" data-value={category}>{category}</div>
+                                        ))}
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200">
+                                <td class="py-2 px-4 font-medium border-r border-gray-200">Medias</td>
+                                <td class="py-2 px-4 media-cell cursor-pointer transition-colors duration-200">
+                                    <input type="file" id="mediaInput" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" class="hidden">
+                                    <div class="media-preview flex flex-wrap gap-2"></div>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200">
+                                <td class="py-2 px-4 font-medium border-r border-gray-200">Type</td>
+                                <td class="py-2 px-4 cursor-pointer" id="typeSelectorCell">
+                                    <div id="typeSelector" class="inline-block">Item</div>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200">
+                                <td class="py-2 px-4 font-medium border-r border-gray-200">Options</td>
+                                <td class="py-2 px-4 cursor-pointer relative" id="optionsSelectorCell">
+                                    <div class="absolute inset-0 flex">
+                                        <div class="w-1/2 h-full" id="optionsDecrease"></div>
+                                        <div class="w-1/2 h-full" id="optionsIncrease"></div>
+                                    </div>
+                                    <div id="optionsSelector" class="text-center">1</div>
+                                </td>
+                            </tr>
+                            <!-- 5 Option rows -->
+                            {[...Array(5)].map((_, index) => (
+                                <tr class="border-b border-gray-200 option-row" style="display: none;">
+                                    <td class="py-2 px-4 font-medium border-r border-gray-200 type-wrapper">
+                                        <input type="text" class="w-full focus:outline-none bg-transparent type-input" placeholder="Type">
+                                        <div class="type-dropdown hidden absolute bg-white shadow-md rounded-md mt-1 max-h-48 overflow-y-auto z-10">
+                                            {attributes.attributes.map((attr) => (
+                                                <div class="py-2 px-4 hover:bg-gray-100 cursor-pointer" data-value={attr.Type}>{attr.Type}</div>
+                                            ))}
+                                        </div>
+                                    </td>
+                                    <td class="py-2 px-4">
+                                        <input type="text" class="w-full focus:outline-none bg-transparent type-value-input" readonly>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="border-t border-gray-200"></div>
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <div id="notesAccordionHeader" class="flex items-center justify-between p-4 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
+                    <h2 class="text-2xl font-bold">Notes</h2>
+                    <svg id="notesAccordionIcon" class="w-6 h-6 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+                <div id="notesAccordionContent" class="hidden">
+                    <div id="editorjs" class="p-4"></div>
+                </div>
+            </div>
         </div>
-        <h2 id="instancesHeader" class="text-lg font-bold mt-4">Instances</h2>
     </div>
 
     <!-- Bottom Sheet -->
@@ -398,29 +408,20 @@ import '../../styles/global.css';
         const typeSelectorCell = document.getElementById('typeSelectorCell');
         const typeOptions = ['Item', 'Variants', 'Service'];
         let currentTypeIndex = 0;
-        const instancesHeader = document.getElementById('instancesHeader');
-
-        function updateInstancesHeader() {
-            instancesHeader.textContent = typeOptions[currentTypeIndex] === 'Item' ? 'Instance' : 'Instances';
-        }
 
         typeSelectorCell.addEventListener('click', () => {
             currentTypeIndex = (currentTypeIndex + 1) % typeOptions.length;
             typeSelector.textContent = typeOptions[currentTypeIndex];
-            updateInstancesHeader();
             console.log(`Selected Type: ${typeOptions[currentTypeIndex]}`);
             // Here you can add code to save the changes, e.g., send to a server
         });
-
-        // Initialize the header text
-        updateInstancesHeader();
 
         // Options selector functionality
         const optionsSelector = document.getElementById('optionsSelector');
         const optionsSelectorCell = document.getElementById('optionsSelectorCell');
         const optionsDecrease = document.getElementById('optionsDecrease');
         const optionsIncrease = document.getElementById('optionsIncrease');
-        const optionsValues = [1, 2, 3, 4, 5, 6];
+        const optionsValues = [1, 2, 3, 4, 5];
         let currentOptionsIndex = 0;
         const optionRows = document.querySelectorAll('.option-row');
 
@@ -486,6 +487,96 @@ import '../../styles/global.css';
         closeBottomSheetButton.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent the click from propagating to the document
             closeBottomSheet();
+        });
+
+        // Add this new code for updating the page title
+        const pageTitle = document.getElementById('pageTitle');
+        const nameField = document.getElementById('nameField');
+
+        function updatePageTitle() {
+            const name = nameField.textContent.trim();
+            pageTitle.textContent = name || 'Product name';
+        }
+
+        nameField.addEventListener('input', updatePageTitle);
+        nameField.addEventListener('blur', updatePageTitle);
+
+        // Add this new code for the accordion functionality
+        const accordionHeader = document.getElementById('accordionHeader');
+        const accordionContent = document.getElementById('accordionContent');
+        const accordionIcon = document.getElementById('accordionIcon');
+
+        const notesAccordionHeader = document.getElementById('notesAccordionHeader');
+        const notesAccordionContent = document.getElementById('notesAccordionContent');
+        const notesAccordionIcon = document.getElementById('notesAccordionIcon');
+
+        function toggleAccordion(content, icon) {
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+            
+            if (!content.classList.contains('hidden')) {
+                content.style.maxHeight = content.scrollHeight + "px";
+            } else {
+                content.style.maxHeight = null;
+            }
+        }
+
+        accordionHeader.addEventListener('click', () => {
+            toggleAccordion(accordionContent, accordionIcon);
+        });
+
+        notesAccordionHeader.addEventListener('click', () => {
+            toggleAccordion(notesAccordionContent, notesAccordionIcon);
+            if (!notesAccordionContent.classList.contains('hidden')) {
+                initializeEditor();
+            }
+        });
+
+        // Initialize EditorJS
+        let editor;
+
+        function initializeEditor() {
+            if (!editor) {
+                editor = new EditorJS({
+                    holder: 'editorjs',
+                    tools: {
+                        header: {
+                            class: Header,
+                            inlineToolbar: ['link']
+                        },
+                        list: {
+                            class: List,
+                            inlineToolbar: true
+                        },
+                        paragraph: {
+                            class: Paragraph,
+                            inlineToolbar: true
+                        }
+                    },
+                    data: {}, // You can load saved data here
+                    placeholder: 'Let\'s write some notes!'
+                });
+            }
+        }
+
+        // Function to save EditorJS content
+        async function saveEditorContent() {
+            if (editor) {
+                try {
+                    const savedData = await editor.save();
+                    console.log('EditorJS data:', savedData);
+                    // Here you can send the savedData to your server or save it locally
+                } catch (error) {
+                    console.error('Saving failed: ', error);
+                }
+            }
+        }
+
+        // Add an event listener to save content when the accordion is closed
+        notesAccordionHeader.addEventListener('click', () => {
+            if (notesAccordionContent.classList.contains('hidden')) {
+                saveEditorContent();
+            }
         });
     </script>
 
@@ -662,6 +753,52 @@ import '../../styles/global.css';
             clip: rect(0, 0, 0, 0);
             white-space: nowrap;
             border-width: 0;
+        }
+
+        /* Remove or comment out the page title styles */
+        /*
+        #pageTitle {
+            transition: background-color 0.2s;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+
+        #pageTitle:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        #pageTitle:focus {
+            background-color: rgba(0, 0, 0, 0.1);
+            outline: none;
+        }
+        */
+
+        /* Add these new styles for the accordion */
+        #accordionHeader {
+            transition: background-color 0.2s;
+        }
+
+        #accordionContent,
+        #notesAccordionContent {
+            transition: max-height 0.3s ease-out;
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        #accordionContent:not(.hidden),
+        #notesAccordionContent:not(.hidden) {
+            max-height: 1000px; /* Adjust this value based on your content */
+        }
+
+        /* Update these styles for the accordions */
+        #accordionHeader,
+        #notesAccordionHeader {
+            width: 100%;
+        }
+
+        #accordionContent,
+        #notesAccordionContent {
+            width: 100%;
         }
     </style>
 </body>
