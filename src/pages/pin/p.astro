@@ -13,7 +13,7 @@ import attributes from './at.json';
             border-collapse: collapse;
             width: 100%;
             max-width: 600px;
-            margin: 0 auto; /* Changed from 20px auto to 0 auto */
+            margin: 0 auto;
             font-family: Arial, sans-serif;
         }
         th, td {
@@ -128,23 +128,6 @@ import attributes from './at.json';
         .media-trigger:hover {
             background-color: #f0f0f0;
         }
-        /* Add these new styles for the attributes table */
-        #attributesTable .type-cell {
-            width: 25%;
-        }
-
-        #attributesTable .value-cell {
-            width: calc(100% - 25% - 32px);
-        }
-
-        #attributesTable .asset-cell {
-            width: 32px;
-        }
-
-        /* Add this new style to remove margin between tables */
-        #attributesTable {
-            margin-top: -1px; /* Negative margin to overlap borders */
-        }
         .attribute-wrapper {
             position: relative;
         }
@@ -180,82 +163,116 @@ import attributes from './at.json';
         .attribute-option:hover {
             background-color: #f0f0f0;
         }
-        .attribute-value-wrapper {
-            position: relative;
-        }
-        .attribute-value-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            min-height: 24px;
-            padding: 2px;
-        }
-        .attribute-value-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-        }
-        .attribute-value-tag {
-            background-color: #e0e0e0;
-            border-radius: 3px;
-            padding: 2px 6px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-        }
-        .attribute-value-tag-remove {
-            margin-left: 4px;
-            cursor: pointer;
-        }
-        .attribute-value-input {
-            flex-grow: 1;
-            border: none;
-            outline: none;
-            font-size: inherit;
-            font-family: inherit;
-            min-width: 60px;
-        }
-        .attribute-value-dropdown {
-            position: absolute;
-            top: 100%;
+
+        /* Updated Bottomsheet styles */
+        .bottomsheet {
+            position: fixed;
+            bottom: 0;
             left: 0;
             right: 0;
             background-color: white;
-            border: 1px solid #ddd;
-            max-height: 150px;
-            overflow-y: auto;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
             z-index: 1000;
-            display: none;
+            height: 70vh; /* Set height to 70% of viewport height */
+            display: flex;
+            flex-direction: column;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding-top: 16px;
         }
-        .attribute-value-option {
-            padding: 8px;
-            cursor: pointer;
+
+        .bottomsheet.active {
+            transform: translateY(0);
         }
-        .attribute-value-option:hover {
-            background-color: #f0f0f0;
+
+        .bottomsheet-content {
+            padding: 48px 16px 16px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
-        .asset-preview {
-            width: 32px;
-            height: 32px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            overflow: hidden;
+
+        .search-bar {
             display: flex;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            background-color: #f8f8f8;
+            padding: 8px 16px;
+            background-color: #f1f3f4;
+            border-radius: 24px;
+            margin-bottom: 16px;
         }
 
-        .asset-preview img {
+        .search-icon {
+            width: 20px;
+            height: 20px;
+            color: #5f6368;
+        }
+
+        .search-input {
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            color: #202124;
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            margin-left: 12px;
+            padding: 8px 0;
         }
 
-        .asset-preview .upload-icon {
-            font-size: 20px;
-            color: #888;
+        .search-input::placeholder {
+            color: #5f6368;
+        }
+
+        .search-input:focus {
+            outline: none;
+        }
+
+        .options-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0; /* Light-weight divider */
+        }
+
+        .option-item:last-child {
+            border-bottom: none; /* Remove border from last item */
+        }
+
+        .option-item:hover, .option-item.selected {
+            background-color: #f5f5f5;
+        }
+
+        .option-name {
+            font-size: 16px;
+            color: #202124;
+        }
+
+        .option-item.last-item {
+            border-bottom: none;
+        }
+
+        /* Add these new styles for the close button */
+        .bottomsheet-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #5f6368; /* Changed to a grey color */
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .bottomsheet-close:hover {
+            color: #202124; /* Darker grey on hover for subtle effect */
         }
     </style>
 </head>
@@ -294,43 +311,54 @@ import attributes from './at.json';
                     <input type="file" id="mediaInput" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" style="display: none;">
                 </td>
             </tr>
+            <tr>
+                <td class="property">Notes</td>
+                <td class="value" contenteditable="true"></td>
+            </tr>
         </tbody>
     </table>
 
-    <table id="attributesTable">
+    <!-- New Options table -->
+    <table id="optionsTable" style="margin-top: 20px;">
         <thead>
             <tr>
-                <th class="property type-cell">Type</th>
-                <th class="property value-cell">Value</th>
-                <th class="property asset-cell">Asset</th>
+                <th class="property">Attributes</th>
+                <th class="value">Values</th>
             </tr>
         </thead>
         <tbody>
+            <!-- Initial row with attribute dropdown -->
             <tr>
-                <td class="value type-cell attribute-wrapper">
-                    <input type="text" class="attribute-input" placeholder="Select Type">
+                <td class="property attribute-wrapper">
+                    <input type="text" class="attribute-input" placeholder="Select an attribute">
                     <div class="attribute-dropdown">
-                        {attributes.attributes.map((attribute) => (
-                            <div class="attribute-option" data-value={attribute.Type}>{attribute.Type}</div>
+                        {attributes.attributes.map((attr) => (
+                            <div class="attribute-option" data-value={attr.Type}>{attr.Type}</div>
                         ))}
                     </div>
                 </td>
-                <td class="value value-cell attribute-value-wrapper">
-                    <input type="text" class="attribute-value-input" placeholder="Select value">
-                    <div class="attribute-value-dropdown"></div>
-                </td>
-                <td class="value asset-cell">
-                    <div class="asset-preview"></div>
-                    <input type="color" class="color-picker" style="display: none;">
-                    <input type="file" class="file-upload" style="display: none;" accept="image/*">
-                </td>
+                <td class="value" contenteditable="true"></td>
             </tr>
         </tbody>
     </table>
 
+    <!-- Bottomsheet for Values -->
+    <div id="valuesBottomsheet" class="bottomsheet">
+        <button class="bottomsheet-close">Close</button>
+        <div class="bottomsheet-content">
+            <div class="search-bar">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" class="search-input" placeholder="Search">
+            </div>
+            <div id="valueOptions" class="options-list"></div>
+        </div>
+    </div>
+
     <script define:vars={{ attributes }}>
         const coreTable = document.getElementById('coreTable');
-        const attributesTable = document.getElementById('attributesTable');
 
         // Name field character limit
         const nameCell = document.querySelector('.value[data-max-length]');
@@ -467,144 +495,162 @@ import attributes from './at.json';
             return '📁'; // default icon for other file types
         }
 
-        // Attribute table functionality
-        const attributeInput = document.querySelector('.attribute-input');
-        const attributeDropdown = document.querySelector('.attribute-dropdown');
-        const attributeOptions = document.querySelectorAll('.attribute-option');
-        const attributeValueInput = document.querySelector('.attribute-value-input');
-        const attributeValueDropdown = document.querySelector('.attribute-value-dropdown');
-        const assetPreview = document.querySelector('.asset-preview');
-        const colorPicker = document.querySelector('.color-picker');
-        const fileUpload = document.querySelector('.file-upload');
+        // Add functionality for the new Options table
+        const optionsTable = document.getElementById('optionsTable');
 
-        // Show attribute dropdown
-        attributeInput.addEventListener('click', () => {
-            attributeDropdown.style.display = 'block';
-        });
+        // Function to add a new row
+        const addOptionRow = () => {
+            const newRow = optionsTable.insertRow(-1);
+            const attributeCell = newRow.insertCell(0);
+            const valueCell = newRow.insertCell(1);
+            
+            attributeCell.className = 'property attribute-wrapper';
+            valueCell.className = 'value';
 
-        // Hide attribute dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!attributeInput.contains(e.target) && !attributeDropdown.contains(e.target)) {
-                attributeDropdown.style.display = 'none';
-            }
-        });
+            // Clone the attribute input and dropdown from the first row
+            const attributeWrapper = optionsTable.rows[1].cells[0].cloneNode(true);
+            attributeCell.appendChild(attributeWrapper);
+            valueCell.textContent = 'Click to select values';
 
-        // Filter attribute options
-        attributeInput.addEventListener('input', () => {
-            const filter = attributeInput.value.toLowerCase();
+            // Add event listeners for the new row
+            setupAttributeListeners(attributeCell, valueCell);
+        };
+
+        // Function to setup attribute listeners
+        const setupAttributeListeners = (attributeCell, valueCell) => {
+            const attributeInput = attributeCell.querySelector('.attribute-input');
+            const attributeDropdown = attributeCell.querySelector('.attribute-dropdown');
+            const attributeOptions = attributeCell.querySelectorAll('.attribute-option');
+            const bottomsheet = document.getElementById('valuesBottomsheet');
+            const bottomsheetContent = bottomsheet.querySelector('.bottomsheet-content');
+            const valueOptions = document.getElementById('valueOptions');
+            const searchBar = bottomsheet.querySelector('.search-input');
+
+            attributeInput.addEventListener('focus', () => {
+                attributeDropdown.style.display = 'block';
+            });
+
+            attributeInput.addEventListener('blur', () => {
+                setTimeout(() => {
+                    attributeDropdown.style.display = 'none';
+                }, 200);
+            });
+
+            attributeInput.addEventListener('input', () => {
+                const filter = attributeInput.value.toLowerCase();
+                attributeOptions.forEach((option) => {
+                    const text = option.textContent.toLowerCase();
+                    if (text.includes(filter)) {
+                        option.style.display = 'block';
+                    } else {
+                        option.style.display = 'none';
+                    }
+                });
+            });
+
             attributeOptions.forEach((option) => {
-                const text = option.textContent?.toLowerCase();
-                if (text && text.includes(filter)) {
-                    option.style.display = 'block';
-                } else {
-                    option.style.display = 'none';
+                option.addEventListener('click', () => {
+                    attributeInput.value = option.textContent;
+                    attributeDropdown.style.display = 'none';
+                    console.log(`Attribute updated to: ${attributeInput.value}`);
+                    
+                    valueCell.textContent = 'Click to select values';
+                    valueCell.addEventListener('click', () => openBottomsheet(attributeInput.value));
+                });
+            });
+
+            valueCell.addEventListener('click', () => {
+                if (attributeInput.value) {
+                    openBottomsheet(attributeInput.value);
                 }
             });
-            attributeDropdown.style.display = 'block';
-        });
 
-        // Select attribute and populate value dropdown
-        attributeOptions.forEach((option) => {
-            option.addEventListener('click', () => {
-                attributeInput.value = option.textContent || '';
-                attributeDropdown.style.display = 'none';
-                console.log(`Attribute Type updated to: ${attributeInput.value}`);
-                
-                const selectedAttribute = attributeInput.value;
-                const attributeValues = attributes.attributes.find(attr => attr.Type === selectedAttribute)?.values || [];
-                
-                attributeValueDropdown.innerHTML = '';
-                
-                attributeValues.forEach(value => {
-                    const valueOption = document.createElement('div');
-                    valueOption.className = 'attribute-value-option';
-                    valueOption.textContent = value;
-                    valueOption.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        attributeValueInput.value = value;
-                        attributeValueDropdown.style.display = 'none';
-                        console.log(`Attribute Value updated to: ${value}`);
+            function openBottomsheet(attributeType) {
+                console.log(`Opening bottomsheet for ${attributeType}`);
+                bottomsheet.classList.add('active');
+                populateBottomsheet(attributeType);
+            }
+
+            function closeBottomsheet() {
+                console.log('Closing bottomsheet');
+                bottomsheet.classList.remove('active');
+            }
+
+            function populateBottomsheet(attributeType) {
+                console.log(`Populating bottomsheet for ${attributeType}`);
+                console.log('Attributes:', attributes);
+                const selectedAttribute = attributes.attributes.find(attr => attr.Type === attributeType);
+                console.log('Selected attribute:', selectedAttribute);
+                if (selectedAttribute) {
+                    valueOptions.innerHTML = '';
+                    selectedAttribute.values.forEach(value => {
+                        const option = document.createElement('div');
+                        option.className = 'option-item';
+                        option.innerHTML = `
+                            <span class="option-name">${value}</span>
+                        `;
+                        option.addEventListener('click', function() {
+                            this.classList.toggle('selected');
+                        });
+                        valueOptions.appendChild(option);
                     });
-                    attributeValueDropdown.appendChild(valueOption);
-                });
 
-                attributeValueInput.value = '';
-                updateAssetCell(selectedAttribute);
-            });
-        });
-
-        // Show attribute value dropdown
-        attributeValueInput.addEventListener('click', () => {
-            attributeValueDropdown.style.display = 'block';
-        });
-
-        // Hide attribute value dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!attributeValueInput.contains(e.target) && !attributeValueDropdown.contains(e.target)) {
-                attributeValueDropdown.style.display = 'none';
+                    // Add search functionality here
+                    const searchInput = bottomsheet.querySelector('.search-input');
+                    searchInput.addEventListener('input', function() {
+                        const filter = this.value.toLowerCase();
+                        const options = valueOptions.querySelectorAll('.option-item');
+                        options.forEach(option => {
+                            const name = option.querySelector('.option-name').textContent.toLowerCase();
+                            if (name.includes(filter)) {
+                                option.style.display = '';
+                            } else {
+                                option.style.display = 'none';
+                            }
+                        });
+                    });
+                } else {
+                    console.log(`Attribute ${attributeType} not found`);
+                }
             }
-        });
 
-        // Filter attribute value options
-        attributeValueInput.addEventListener('input', () => {
-            const filter = attributeValueInput.value.toLowerCase();
-            const options = attributeValueDropdown.querySelectorAll('.attribute-value-option');
-            options.forEach(option => {
-                const text = option.textContent.toLowerCase();
-                option.style.display = text.includes(filter) ? 'block' : 'none';
-            });
-            attributeValueDropdown.style.display = 'block';
-        });
-
-        // Asset cell functionality
-        function updateAssetCell(attributeType) {
-            if (attributeType.toLowerCase() === 'color') {
-                assetPreview.innerHTML = '';
-                assetPreview.style.backgroundColor = '#f8f8f8'; // Default color
-                assetPreview.addEventListener('click', () => colorPicker.click());
-                colorPicker.style.display = 'none';
-                fileUpload.style.display = 'none';
-            } else {
-                assetPreview.innerHTML = '<span class="upload-icon">+</span>';
-                assetPreview.style.backgroundColor = '#f8f8f8';
-                assetPreview.addEventListener('click', () => fileUpload.click());
-                colorPicker.style.display = 'none';
-                fileUpload.style.display = 'none';
+            function getRandomStatus() {
+                const statuses = ['online', 'offline', 'busy', 'error', 'special'];
+                return statuses[Math.floor(Math.random() * statuses.length)];
             }
-        }
 
-        colorPicker.addEventListener('change', (e) => {
-            assetPreview.style.backgroundColor = e.target.value;
-            console.log(`Color Asset updated to: ${e.target.value}`);
-        });
+            function capitalizeFirstLetter(string) {
+                return string.charAt(0).toUpperCase() + string.slice(1);
+            }
 
-        fileUpload.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                const reader = new FileReader();
+            bottomsheet.querySelector('.bottomsheet-close').addEventListener('click', closeBottomsheet);
 
-                reader.onload = (event) => {
-                    if (file.type.startsWith('image/')) {
-                        assetPreview.innerHTML = `<img src="${event.target.result}" alt="Uploaded asset">`;
-                        assetPreview.style.backgroundColor = 'transparent';
+            searchBar.addEventListener('input', function() {
+                const filter = this.value.toLowerCase();
+                const options = valueOptions.querySelectorAll('.option-item');
+                options.forEach(option => {
+                    const name = option.querySelector('.option-name').textContent.toLowerCase();
+                    if (name.includes(filter)) {
+                        option.style.display = '';
                     } else {
-                        assetPreview.innerHTML = `<span>${getFileIcon(file.type)}</span>`;
-                        assetPreview.style.backgroundColor = '#f8f8f8';
+                        option.style.display = 'none';
                     }
-                };
+                });
+            });
+        };
 
-                reader.readAsDataURL(file);
-                console.log(`Asset updated to: ${file.name}`);
-                // Here you can add code to handle the file upload, e.g., send to a server
+        // Setup listeners for the initial row
+        setupAttributeListeners(optionsTable.rows[1].cells[0], optionsTable.rows[1].cells[1]);
+
+        // Add a new row when the last row is being edited
+        optionsTable.addEventListener('input', (event) => {
+            const target = event.target;
+            if (target.closest('tr') === optionsTable.rows[optionsTable.rows.length - 1]) {
+                addOptionRow();
             }
         });
 
-        function getFileIcon(fileType) {
-            if (fileType.includes('pdf')) return '📄';
-            if (fileType.includes('doc')) return '📝';
-            if (fileType.includes('xls')) return '📊';
-            return '📁'; // default icon for other file types
-        }
+        console.log('Script executed');
     </script>
 </body>
 </html>
