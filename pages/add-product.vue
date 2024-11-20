@@ -1569,54 +1569,52 @@ const selectedChannelsDisplay = computed(() => {
             <div class="flex-1" :data-row="rowNum">
               <Select 
                 v-if="selectedType === 'G'"
-                :model-value="selectedOptionsString(rowNum)"
+                :model-value="''"
                 @update:model-value="handleMultiSelectUpdate(rowNum, $event)"
                 :disabled="!selectedAttributes[rowNum]"
               >
-                <SelectTrigger class="w-full h-full border-0 shadow-none focus:ring-0 px-4 py-3">
-                  <SelectValue>
+                <SelectTrigger class="w-full border-0 shadow-none focus:ring-0 px-4 py-3">
+                  <div class="flex flex-wrap gap-1.5">
                     <template v-if="selectedOptions[rowNum]?.length">
-                      <div class="flex flex-wrap gap-1.5">
-                        <span 
-                          v-for="value in selectedOptions[rowNum]" 
-                          :key="value"
-                          class="inline-flex items-center text-xs bg-gray-100 text-gray-700 rounded-full px-2 py-0.5"
-                        >
-                          {{ value }}
-                        </span>
-                      </div>
+                      <span 
+                        v-for="value in selectedOptions[rowNum]" 
+                        :key="value"
+                        class="inline-flex items-center text-xs bg-gray-100 text-gray-700 rounded-full px-2 py-0.5"
+                      >
+                        {{ value }}
+                      </span>
                     </template>
                     <template v-else>
                       <span class="text-gray-400">Select multiple values</span>
                     </template>
-                  </SelectValue>
-                  <ChevronDown class="h-4 w-4 text-white" /> <!-- Updated to text-white -->
+                  </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <template v-if="selectedAttributes[rowNum]">
-                    <SelectItem
-                      v-for="option in getFilteredOptions(rowNum)"
-                      :key="option.id"
-                      :value="option.value"
-                    >
-                      <div class="flex items-center gap-2">
-                        <template v-if="option.type === 'color'">
-                          <div 
-                            class="w-4 h-4 rounded-sm" 
-                            :style="{ backgroundColor: option.visual }"
-                          />
-                        </template>
-                        <template v-else>
-                          <span class="w-4 text-center">{{ option.visual }}</span>
-                        </template>
-                        <span>{{ option.value }}</span>
-                        <span v-if="selectedOptions[rowNum].includes(option.value)" class="ml-auto">✓</span>
-                      </div>
-                    </SelectItem>
-                  </template>
-                  <div v-else class="p-2 text-sm text-gray-400">
-                    Select an attribute first
-                  </div>
+                  <SelectItem
+                    v-for="option in getFilteredOptions(rowNum)"
+                    :key="option.id"
+                    :value="option.value"
+                    :textValue="option.value"
+                  >
+                    <div class="flex items-center w-full">
+                      <span class="w-4 mr-2">
+                        <Check 
+                          v-if="selectedOptions[rowNum].includes(option.value)" 
+                          class="h-4 w-4"
+                        />
+                      </span>
+                      <template v-if="option.type === 'color'">
+                        <div 
+                          class="w-4 h-4 rounded-sm mr-2" 
+                          :style="{ backgroundColor: option.visual }"
+                        />
+                      </template>
+                      <template v-else>
+                        <span class="w-4 text-center mr-2">{{ option.visual }}</span>
+                      </template>
+                      <span>{{ option.value }}</span>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
 
@@ -2031,18 +2029,15 @@ const selectedChannelsDisplay = computed(() => {
 
           <!-- Replace the sales channels row in the publish sheet -->
           <div class="flex items-center border-b hover:bg-gray-50">
-            <div class="w-[100px] border-r p-4">
-              <span class="text-sm font-medium">Channels</span>
-            </div>
-            <div class="flex-1 p-2">
+            <div class="w-full p-2">
               <Select
-                :model-value="selectedChannels[0] || ''"
+                :model-value="selectedChannels"
                 @update:model-value="handleChannelSelect"
-                :disabled="false"
+                :multiple="true"
               >
                 <SelectTrigger class="w-full border-0 shadow-none focus:ring-0 px-4 py-3">
                   <SelectValue>
-                    {{ selectedChannels.length ? `${selectedChannels.length} channels` : 'Select channels' }}
+                    {{ selectedChannelsDisplay }}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -2050,10 +2045,16 @@ const selectedChannelsDisplay = computed(() => {
                     v-for="channel in salesChannels"
                     :key="channel"
                     :value="channel"
+                    :textValue="channel"
                   >
-                    <div class="flex items-center justify-between w-full">
+                    <div class="flex items-center w-full">
+                      <span class="w-4 mr-2">
+                        <Check 
+                          v-if="selectedChannels.includes(channel)" 
+                          class="h-4 w-4"
+                        />
+                      </span>
                       <span>{{ channel }}</span>
-                      <span v-if="selectedChannels.includes(channel)" class="ml-auto">✓</span>
                     </div>
                   </SelectItem>
                 </SelectContent>
