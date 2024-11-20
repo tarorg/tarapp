@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed, onBeforeUnmount } from 'vue'
+import { ref, onMounted, watch, computed, onBeforeUnmount, Ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -22,6 +22,11 @@ import {
   Smartphone,
   HeartHandshake,
   Settings2,
+  Check,
+  Eye,
+  EyeOff,
+  Power,
+  PowerOff,
 } from 'lucide-vue-next'
 import { initDB, getAttributes, getOptions, dbStatus } from '@/services/indexedDB'
 import {
@@ -37,6 +42,24 @@ import List from '@editorjs/list'
 import Paragraph from '@editorjs/paragraph'
 import ImageTool from '@editorjs/image'
 import Table from '@editorjs/table'
+import {
+  TagsInput,
+  TagsInputInput,
+  TagsInputItem,
+  TagsInputItemDelete,
+  TagsInputItemText,
+} from '@/components/ui/tags-input'
+import { Calendar } from '@/components/ui/calendar'
+import { 
+  type DateValue,
+  getLocalTimeZone, 
+  today,
+  CalendarDate,
+  DateFormatter 
+} from '@internationalized/date'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { CalendarIcon } from 'lucide-vue-next'
+import { cn } from '@/lib/utils'
 
 interface AttributeOption {
   value: string
@@ -189,7 +212,7 @@ const saveProduct = async () => {
         visibility,
         weight,
         weightunit
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `.trim()
 
     // Add these new refs
@@ -201,11 +224,12 @@ const saveProduct = async () => {
     const tags = ref<string[]>([])
     const trackQuantity = ref(true)
     const continueSelling = ref(false)
-    const status = ref<'draft' | 'published'>('draft')
+    const status = ref<'draft' | 'published'>('published')
     const saleChannels = ref<string[]>([])
     const visibility = ref<'visible' | 'hidden'>('visible')
     const weight = ref<number | null>(null)
     const weightUnit = ref('kg')
+    const productUnit = ref('pcs')
 
     const values = [
       'default-store', // storeid - replace with actual store ID
@@ -240,7 +264,8 @@ const saveProduct = async () => {
         cost: Number(skuDetailsData.value[sku.sku]?.cost || 0),
         price: Number(skuDetailsData.value[sku.sku]?.price || 0),
         MRP: Number(skuDetailsData.value[sku.sku]?.mrp || 0),
-        stock: getSkuTotalStock(sku.sku) || 0
+        stock: getSkuTotalStock(sku.sku) || 0,
+        status: status.value,
       }))),
       generatedSkus.value.reduce((sum, sku) => sum + (getSkuTotalStock(sku.sku) || 0), 0),
       trackQuantity.value,
@@ -249,7 +274,8 @@ const saveProduct = async () => {
       JSON.stringify(saleChannels.value),
       visibility.value,
       weight.value,
-      weightUnit.value
+      weightUnit.value,
+      productUnit.value
     ]
 
     const url = "https://commerce-tarframework.turso.io/v2/pipeline"
@@ -1188,6 +1214,134 @@ const toggleProdType = () => {
 
 // Add this ref near other refs
 const collections = ref('')
+
+// Add this ref near other refs
+const handle = ref('')
+
+// Add these refs near other refs
+const pageTitle = ref('')
+const metaDesc = ref('')
+const modelValue = ref<string[]>([])
+
+// Add this method to handle tag input
+const handleTagInput = (event: KeyboardEvent) => {
+  if (event.key === 'Enter' && modelValue.value.includes(tagInput.value.trim())) {
+    if (!modelValue.value.includes(tagInput.value.trim())) {
+      modelValue.value.push(tagInput.value.trim())
+    }
+    tagInput.value = ''
+  }
+}
+
+// Add this constant near the top of the script section, with other constants
+const vendors = [
+  'Sony',
+  'Microsoft',
+  'Nvidia'
+]
+
+// Add this ref with other refs
+const vendor = ref('')
+
+// Add these refs near other refs at the top
+const status = ref<'draft' | 'published'>('published') // Changed default to 'published'
+const publishedDate = ref(new Date().toISOString().split('T')[0]) // Format: YYYY-MM-DD
+const publishTime = ref('00:00')
+
+// Update the computed property
+const publishedAt = computed(() => {
+  return `${publishedDate.value}T${publishTime.value}`
+})
+
+// Add these refs near other refs
+const publishDate = ref<DateValue>(today(getLocalTimeZone()))
+const df = new DateFormatter('en-US', { dateStyle: 'long' })
+
+const formatDate = (date: DateValue | null) => {
+  if (!date) return "Pick a date"
+  
+  // Format the date parts manually
+  const parts = {
+    year: date.year,
+    month: date.month,
+    day: date.day
+  }
+  
+  // Create a JavaScript Date object
+  const jsDate = new Date(parts.year, parts.month - 1, parts.day)
+  return df.format(jsDate)
+}
+
+// Add this ref to store visibility state
+const isVisible = ref(true)
+
+// Add this method to toggle visibility
+const toggleVisibility = () => {
+  isVisible.value = !isVisible.value
+}
+
+// Add this ref to store active state
+const isActive = ref(true)
+
+// Add this method to toggle active state
+const toggleActive = () => {
+  isActive.value = !isActive.value
+}
+
+// Add this method to toggle status
+const toggleStatus = () => {
+  status.value = status.value === 'published' ? 'draft' : 'published'
+}
+
+// Add these refs near your other refs
+const trackQuantity = ref(true)
+const continueSelling = ref(false)
+
+// Add these methods near your other toggle methods
+const toggleTrackQuantity = () => {
+  trackQuantity.value = !trackQuantity.value
+}
+
+// Update the continueSelling ref to reflect preorder state
+const toggleContinueSelling = () => {
+  continueSelling.value = !continueSelling.value
+  // When saving to database:
+  // continueSelling.value = true means "yes" in products table
+  // continueSelling.value = false means "no" in products table
+}
+
+// Add these refs near other refs
+const weight = ref('')
+const weightUnit = ref('kg')
+const productUnit = ref('pcs')
+
+// Add these constants for the units
+const weightUnits = ['kg', 'g', 'lb', 'oz']
+const productUnits = ['pcs', 'box', 'set', 'pair', 'pack', 'roll', 'bundle']
+
+// Add these near your other constants
+const salesChannels = [
+  'Online',
+  'Point of Sale'
+] as const
+
+// Change the ref type to string array
+const selectedChannels = ref<string[]>([]) // Initialize as empty array
+
+const handleChannelSelect = (channel: string) => {
+  const index = selectedChannels.value.indexOf(channel)
+  if (index === -1) {
+    selectedChannels.value.push(channel)
+  } else {
+    selectedChannels.value.splice(index, 1)
+  }
+}
+
+// Update the computed property
+const selectedChannelsDisplay = computed(() => {
+  if (selectedChannels.value.length === 0) return 'Select channels'
+  return `${selectedChannels.value.length} channels`
+})
 </script>
 
 <template>
@@ -1205,7 +1359,7 @@ const collections = ref('')
         <Button 
           variant="ghost" 
           size="icon"
-          @click="openPublishSheet"
+          @click="showPublishSheet = true"
         >
           <ChevronRight class="h-5 w-5" />
         </Button>
@@ -1565,30 +1719,24 @@ const collections = ref('')
     <!-- Replace the Description Sheet -->
     <Sheet v-model:open="showDescriptionSheet">
       <SheetContent side="right" class="w-full">
-        <div class="flex flex-col h-full">
-          <!-- Top Bar -->
-          <div class="flex items-center justify-between p-4 border-b">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              @click="showDescriptionSheet = false"
-              class="mr-auto"
-            >
-              <ArrowLeft class="h-5 w-5" />
-            </Button>
-            <Button 
-              variant="ghost"
-              class="px-4"
-              @click="saveDescription"
-            >
-              Save
-            </Button>
+        <!-- Start directly with content, no header -->
+        <div class="flex-1 overflow-y-auto">
+          <!-- Handle Row -->
+          <div class="flex items-center border-b hover:bg-gray-50">
+            <div class="w-32 border-r p-4">
+              <span class="text-sm font-medium">Handle</span>
+            </div>
+            <div class="flex-1 p-2">
+              <input
+                v-model="handle"
+                type="text"
+                placeholder="Enter handle"
+                class="w-full py-3 px-4 bg-transparent border-0 focus:outline-none placeholder:text-gray-400 text-sm"
+              />
+            </div>
           </div>
 
-          <!-- Editor Area -->
-          <div class="flex-1 px-4 overflow-y-auto">
-            <div id="editor" />
-          </div>
+          <!-- Rest of your rows... -->
         </div>
       </SheetContent>
     </Sheet>
@@ -1834,146 +1982,292 @@ const collections = ref('')
       </SheetContent>
     </Sheet>
 
-    <!-- Add this new Publish Sheet component after other sheets -->
+    <!-- Update the Publish Sheet component -->
     <Sheet v-model:open="showPublishSheet">
-      <SheetContent side="right" class="w-full">
-        <div class="flex flex-col h-full">
-          <!-- Header -->
-          <div class="flex items-center justify-between p-4 border-b">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              @click="showPublishSheet = false"
-              class="mr-auto"
-            >
-              <ArrowLeft class="h-5 w-5" />
-            </Button>
-            <Button 
-              variant="ghost"
-              class="px-4"
-              @click="saveProduct"
-              :disabled="isSaving"
-            >
-              {{ isSaving ? 'Saving...' : 'Publish' }}
-            </Button>
+      <SheetContent side="right" class="w-full sm:max-w-md">
+        <!-- Start directly with content -->
+        <div class="flex-1 overflow-y-auto">
+          <!-- Handle Row -->
+          <div class="flex items-center border-b hover:bg-gray-50">
+            <div class="w-[100px] border-r p-4">
+              <span class="text-sm font-medium">Handle</span>
+            </div>
+            <div class="flex-1 p-2">
+              <input
+                v-model="handle"
+                type="text"
+                placeholder="Enter handle"
+                class="w-full py-3 px-4 bg-transparent border-0 focus:outline-none placeholder:text-gray-400 text-sm"
+              />
+            </div>
           </div>
 
-          <!-- Content -->
-          <div class="flex-1 overflow-y-auto">
-            <!-- Status Row -->
-            <div class="flex items-center border-b hover:bg-gray-50">
-              <div class="w-32 border-r p-4">
-                <span class="text-sm font-medium">Status</span>
-              </div>
-              <div class="flex-1 p-2">
-                <Select 
-                  v-model="status"
-                  class="w-full"
+          <!-- Page Title Row -->
+          <div class="flex items-center border-b hover:bg-gray-50">
+            <div class="w-[100px] border-r p-4">
+              <span class="text-sm font-medium">Page Title</span>
+            </div>
+            <div class="flex-1 p-2">
+              <input
+                v-model="pageTitle"
+                type="text"
+                placeholder="Enter page title"
+                class="w-full py-3 px-4 bg-transparent border-0 focus:outline-none placeholder:text-gray-400 text-sm"
+              />
+            </div>
+          </div>
+
+          <!-- Meta Description Row - Full Width -->
+          <div class="border-b hover:bg-gray-50">
+            <div class="p-2">
+              <textarea
+                v-model="metaDesc"
+                rows="3"
+                placeholder="Enter meta description"
+                class="w-full py-3 px-4 bg-transparent border-0 focus:outline-none placeholder:text-gray-400 text-sm resize-none"
+              />
+            </div>
+          </div>
+
+          <!-- Replace the sales channels row in the publish sheet -->
+          <div class="flex items-center border-b hover:bg-gray-50">
+            <div class="w-[100px] border-r p-4">
+              <span class="text-sm font-medium">Channels</span>
+            </div>
+            <div class="flex-1 p-2">
+              <Select
+                :model-value="selectedChannels[0] || ''"
+                @update:model-value="handleChannelSelect"
+                :disabled="false"
+              >
+                <SelectTrigger class="w-full border-0 shadow-none focus:ring-0 px-4 py-3">
+                  <SelectValue>
+                    {{ selectedChannels.length ? `${selectedChannels.length} channels` : 'Select channels' }}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="channel in salesChannels"
+                    :key="channel"
+                    :value="channel"
+                  >
+                    <div class="flex items-center justify-between w-full">
+                      <span>{{ channel }}</span>
+                      <span v-if="selectedChannels.includes(channel)" class="ml-auto">✓</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <!-- Tags Row - Full Width -->
+          <div class="border-b hover:bg-gray-50">
+            <div class="p-2">
+              <TagsInput v-model="modelValue">
+                <TagsInputItem 
+                  v-for="item in modelValue" 
+                  :key="item" 
+                  :value="item"
+                  class="bg-gray-100"
                 >
-                  <SelectTrigger class="w-full border-0 shadow-none focus:ring-0">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                  <TagsInputItemText>{{ item }}</TagsInputItemText>
+                  <TagsInputItemDelete />
+                </TagsInputItem>
+                <TagsInputInput placeholder="Enter tags..." />
+              </TagsInput>
+            </div>
+          </div>
+
+          <!-- Add this after the Meta Description Row and before the Tags Row in the Publish Sheet -->
+          <div class="flex items-center border-b hover:bg-gray-50">
+            <div class="w-32 border-r p-4">
+              <span class="text-sm font-medium">Vendor</span>
+            </div>
+            <div class="flex-1 p-2">
+              <Select
+                v-model="vendor"
+                :disabled="false"
+              >
+                <SelectTrigger class="w-full border-0 shadow-none focus:ring-0 px-4 py-3">
+                  <SelectValue>
+                    {{ vendor || 'Select vendor' }}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="vendorOption in vendors"
+                    :key="vendorOption"
+                    :value="vendorOption"
+                  >
+                    {{ vendorOption }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <!-- Add this row before the track quantity row in the publish sheet -->
+          <div class="flex items-center border-b hover:bg-gray-50">
+            <!-- Cell 1 - Weight Input -->
+            <div class="flex-1 p-2">
+              <input
+                v-model="weight"
+                type="number"
+                placeholder="weight"
+                class="w-full py-3 px-4 bg-transparent border-0 focus:outline-none placeholder:text-gray-400 text-sm"
+              />
             </div>
 
-            <!-- Visibility Row -->
-            <div class="flex items-center border-b hover:bg-gray-50">
-              <div class="w-32 border-r p-4">
-                <span class="text-sm font-medium">Visibility</span>
-              </div>
-              <div class="flex-1 p-2">
-                <Select 
-                  v-model="visibility"
-                  class="w-full"
-                >
-                  <SelectTrigger class="w-full border-0 shadow-none focus:ring-0">
-                    <SelectValue placeholder="Select visibility" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="visible">Visible</SelectItem>
-                    <SelectItem value="hidden">Hidden</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <!-- Cell 2 - Weight Unit -->
+            <div class="w-[100px] border-l p-2">
+              <Select
+                v-model="weightUnit"
+                :disabled="false"
+              >
+                <SelectTrigger class="w-full border-0 shadow-none focus:ring-0 px-4 py-3">
+                  <SelectValue>
+                    {{ weightUnit }}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="unit in weightUnits"
+                    :key="unit"
+                    :value="unit"
+                  >
+                    {{ unit }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <!-- Sales Channels Row -->
-            <div class="flex items-center border-b hover:bg-gray-50">
-              <div class="w-32 border-r p-4">
-                <span class="text-sm font-medium">Sales Channels</span>
-              </div>
-              <div class="flex-1 p-2">
-                <div class="space-y-2">
-                  <div class="flex items-center">
-                    <input 
-                      type="checkbox" 
-                      id="online-store"
-                      v-model="saleChannels"
-                      value="online-store"
-                      class="rounded border-gray-300"
-                    />
-                    <label for="online-store" class="ml-2 text-sm">Online Store</label>
-                  </div>
-                  <div class="flex items-center">
-                    <input 
-                      type="checkbox" 
-                      id="pos"
-                      v-model="saleChannels"
-                      value="pos"
-                      class="rounded border-gray-300"
-                    />
-                    <label for="pos" class="ml-2 text-sm">Point of Sale</label>
-                  </div>
-                </div>
-              </div>
+            <!-- Cell 3 - Product Unit -->
+            <div class="w-[100px] border-l p-2">
+              <Select
+                v-model="productUnit"
+                :disabled="false"
+              >
+                <SelectTrigger class="w-full border-0 shadow-none focus:ring-0 px-4 py-3">
+                  <SelectValue>
+                    {{ productUnit }}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="unit in productUnits"
+                    :key="unit"
+                    :value="unit"
+                  >
+                    {{ unit }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <!-- Replace the track quantity row in the publish sheet -->
+          <div class="flex items-center border-b hover:bg-gray-50">
+            <!-- Cell 1 - Track Quantity Toggle -->
+            <div class="flex-1 p-2">
+              <button
+                class="w-full text-left px-4 py-3 text-sm"
+                @click="toggleTrackQuantity"
+              >
+                {{ trackQuantity ? 'track quantity' : 'no tracking' }}
+              </button>
             </div>
 
-            <!-- Page Title Row -->
-            <div class="flex items-center border-b hover:bg-gray-50">
-              <div class="w-32 border-r p-4">
-                <span class="text-sm font-medium">Page Title</span>
-              </div>
-              <div class="flex-1 p-2">
-                <Input 
-                  v-model="pageTitle"
-                  placeholder="Enter page title"
-                  class="w-full border-0 shadow-none focus:ring-0"
-                />
-              </div>
+            <!-- Cell 2 - Accept Preorder/Regular Toggle -->
+            <div class="flex-1 border-l p-2">
+              <button 
+                class="w-full text-left px-4 py-3 text-sm"
+                @click="toggleContinueSelling"
+              >
+                {{ continueSelling ? 'accept preorder' : 'regular' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Replace the Status Row -->
+          <div class="flex items-center border-b hover:bg-gray-50">
+            <!-- Cell 1 - Status Toggle Button -->
+            <div class="flex-1 p-2">
+              <button
+                class="w-full text-left px-4 py-3 text-sm"
+                @click="toggleStatus"
+              >
+                {{ status }}
+              </button>
             </div>
 
-            <!-- Meta Description Row -->
-            <div class="flex items-center border-b hover:bg-gray-50">
-              <div class="w-32 border-r p-4">
-                <span class="text-sm font-medium">Meta Description</span>
-              </div>
-              <div class="flex-1 p-2">
-                <textarea 
-                  v-model="metaDesc"
-                  rows="3"
-                  class="w-full rounded-none border-0 bg-transparent p-0 text-sm focus:ring-0"
-                  placeholder="Enter meta description"
-                />
-              </div>
+            <!-- Cell 2 - Visibility Toggle -->
+            <div class="w-[100px] border-l p-2">
+              <button 
+                class="w-full text-left px-4 py-3 text-sm"
+                @click="toggleVisibility"
+              >
+                {{ isVisible ? 'visible' : 'hidden' }}
+              </button>
             </div>
 
-            <!-- URL Handle Row -->
-            <div class="flex items-center border-b hover:bg-gray-50">
-              <div class="w-32 border-r p-4">
-                <span class="text-sm font-medium">URL Handle</span>
-              </div>
-              <div class="flex-1 p-2">
-                <Input 
-                  v-model="handle"
-                  placeholder="Enter URL handle"
-                  class="w-full border-0 shadow-none focus:ring-0"
-                />
-              </div>
+            <!-- Cell 3 - Active Toggle -->
+            <div class="w-[100px] border-l p-2">
+              <button 
+                class="w-full text-left px-4 py-3 text-sm"
+                @click="toggleActive"
+              >
+                {{ isActive ? 'active' : 'inactive' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Update the publish date row to include save functionality -->
+          <div class="flex items-center border-b hover:bg-gray-50">
+            <!-- Cell 1 - Date Picker -->
+            <div class="flex-1 p-2">
+              <Popover>
+                <PopoverTrigger as-child>
+                  <Button
+                    variant="outline"
+                    :class="cn(
+                      'w-full border-0 shadow-none justify-start text-left font-normal',
+                      !publishDate && 'text-muted-foreground'
+                    )"
+                  >
+                    <CalendarIcon class="mr-2 h-4 w-4" />
+                    {{ formatDate(publishDate) }}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent class="w-auto p-0" align="start">
+                  <Calendar
+                    v-model="publishDate"
+                    :min-value="today(getLocalTimeZone())"
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <!-- Cell 2 - Time Input -->
+            <div class="w-[100px] border-l p-2">
+              <Input
+                v-model="publishTime"
+                type="time"
+                class="w-full border-0 shadow-none focus:ring-0"
+                :placeholder="'00:00'"
+              />
+            </div>
+
+            <!-- Cell 3 - Save Button -->
+            <div class="w-12 border-l p-2 flex items-center justify-center">
+              <button 
+                class="w-8 h-8 rounded-full bg-black flex items-center justify-center hover:bg-gray-900 transition-colors"
+                @click="saveProduct"
+                :disabled="isSaving"
+              >
+                <Check class="h-4 w-4 text-white" />
+              </button>
             </div>
           </div>
         </div>
@@ -2338,6 +2632,49 @@ input:-webkit-autofill:active {
   textarea {
     resize: none;
   }
+}
+
+/* Add these styles for the tags input */
+:deep(.tags-input) {
+  border: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+:deep(.tags-input:focus-within) {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  ring: none !important;
+}
+
+:deep(.tags-input-item) {
+  background-color: rgb(243 244 246) !important;
+  border: none !important;
+}
+
+:deep(.tags-input-input) {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+:deep(.tags-input-input:focus) {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Add these styles to your existing <style> section */
+:deep(.popover-content) {
+  width: auto !important;
+  margin: 0 !important;
+}
+
+:deep(.calendar) {
+  border-radius: 0.5rem;
+  border: 1px solid rgb(229 231 235);
 }
 </style>
 
