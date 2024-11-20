@@ -1,0 +1,181 @@
+Here are all the drawer (Sheet) components in the page:
+Description Sheet
+Triggered by clicking the chevron button next to product name
+Contains the EditorJS rich text editor for product description
+Media Preview Sheet
+Opens when clicking on any media (image/video)
+Shows full preview of media with remove option at bottom
+SKU Details Sheet
+Opens when clicking on a SKU row
+Contains UPC, media, collection, cost, price, and MRP fields
+Stock Management Sheet
+Opens when clicking on stock number
+Shows stock details with group, stock, DOM, and shelf life
+Date Picker Sheet
+Opens when clicking on DOM (Date of Manufacturing) field
+Shows date picker for selecting DOM
+Confirmation Sheet
+Opens when changing attributes that have values selected
+Confirms if user wants to change attribute and reset values
+These drawers are implemented using the Sheet component and appear from the bottom of the screen.
+
+table "product"
+
+type
+product name
+description
+medias 
+unit
+category
+option1
+option2
+option3
+totalstock
+items
+{ 
+
+SKU : " ",
+desc : " ",
+upc : " ",
+medias : "  ",
+collection : " ",
+cost : " ",
+price : " ",
+MRP : " ",
+stock : " "
+
+}
+
+{ 
+
+SKU : " ",
+desc : " ",
+upc : " ",
+medias : "  ",
+collection : " ",
+cost : " ",
+price : " ",
+MRP : " ",
+stock : " "
+
+}
+
+CREATE TABLE products ( 
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    storeid TEXT NOT NULL,
+    type TEXT,
+    prodtype TEXT, -- 'physical', 'digital', 'service'
+    productname TEXT NOT NULL,
+    description TEXT,
+    medias TEXT,
+    
+    -- SEO and URLs
+    handle TEXT,
+    pagetitle TEXT,
+    metadesc TEXT,
+    
+    -- Organization
+    unit TEXT,
+    category TEXT,
+    vendor TEXT,
+    collections TEXT,
+    tags TEXT,
+    
+    -- Options and Variants
+    option1 TEXT,
+    option2 TEXT,
+    option3 TEXT,
+    items TEXT,
+    
+    -- Inventory
+    totalstock INTEGER,
+    trackquantity BOOLEAN,
+    continueselling BOOLEAN,
+    
+    -- Status and Visibility
+    status TEXT DEFAULT 'draft',
+    publishedat TEXT,
+    saleschannels TEXT,
+    visibility TEXT DEFAULT 'visible',
+    
+    -- Shipping
+    weight REAL,
+    weightunit TEXT,
+    
+    -- Timestamps
+    createdat TEXT DEFAULT CURRENT_TIMESTAMP,
+    updatedat TEXT DEFAULT CURRENT_TIMESTAMP,
+    active BOOLEAN DEFAULT true
+);
+
+
+
+CREATE TABLE stores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    domain TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL,
+    phone TEXT,
+    address TEXT,
+    addressext TEXT,
+    city TEXT,
+    state TEXT,
+    country TEXT,
+    postalcode TEXT,
+    currency TEXT DEFAULT 'USD',
+    timezone TEXT,
+    locale TEXT DEFAULT 'en',
+    weightunit TEXT DEFAULT 'kg',
+    planname TEXT,
+    plandisplay TEXT,
+    logo TEXT,
+    favicon TEXT,
+    color TEXT,
+    social TEXT,
+    createdat DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedat DATETIME DEFAULT CURRENT_TIMESTAMP,
+    active BOOLEAN DEFAULT true
+);
+
+-- Modified junction table for Nhost users
+CREATE TABLE storeusers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    storeid INTEGER NOT NULL,
+    userid TEXT NOT NULL, -- Changed to TEXT to store Nhost UUID
+    role TEXT NOT NULL, -- 'owner', 'admin', 'staff', etc.
+    permissions TEXT, -- JSON field for specific permissions
+    createdat DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedat DATETIME DEFAULT CURRENT_TIMESTAMP,
+    active BOOLEAN DEFAULT true,
+    FOREIGN KEY (storeid) REFERENCES stores(id)
+);
+
+-------------------------------------------------------------------------------------------
+INSERT INTO products (
+        storeid,
+        type,
+        prodtype,
+        productname,
+        description,
+        medias,
+        handle,
+        pagetitle,
+        metadesc,
+        unit,
+        category,
+        vendor,
+        collections,
+        tags,
+        option1,
+        option2,
+        option3,
+        items,
+        totalstock,
+        trackquantity,
+        continueselling,
+        status,
+        saleschannels,
+        visibility,
+        weight,
+        weightunit
+      )
