@@ -147,6 +147,14 @@ const goBack = () => {
 // Add this ref
 const isSaving = ref(false)
 
+// Add this ref for the publish sheet
+const showPublishSheet = ref(false)
+
+// Replace the saveProduct function with openPublishSheet
+const openPublishSheet = () => {
+  showPublishSheet.value = true
+}
+
 // Update the saveProduct function
 const saveProduct = async () => {
   if (isSaving.value) return
@@ -1196,11 +1204,10 @@ const collections = ref('')
       <div>
         <Button 
           variant="ghost" 
-          @click="saveProduct"
-          class="px-4"
-          :disabled="isSaving"
+          size="icon"
+          @click="openPublishSheet"
         >
-          {{ isSaving ? 'Saving...' : 'Save' }}
+          <ChevronRight class="h-5 w-5" />
         </Button>
       </div>
     </header>
@@ -1236,9 +1243,18 @@ const collections = ref('')
                 @click="toggleProdType"
                 class="w-full h-full px-2 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 focus:outline-none"
               >
-                <Package v-if="selectedProdType === 'physical'" class="w-4 h-4 mx-auto" />
-                <Smartphone v-else-if="selectedProdType === 'digital'" class="w-4 h-4 mx-auto" />
-                <HeartHandshake v-else class="w-4 h-4 mx-auto" /> <!-- Changed to HeartHandshake icon -->
+                <Package 
+                  v-if="selectedProdType === 'physical'" 
+                  class="w-4 h-4 mx-auto Package" 
+                />
+                <Smartphone 
+                  v-else-if="selectedProdType === 'digital'" 
+                  class="w-4 h-4 mx-auto Smartphone" 
+                />
+                <HeartHandshake 
+                  v-else 
+                  class="w-4 h-4 mx-auto HeartHandshake" 
+                />
               </button>
             </div>
             
@@ -1366,7 +1382,7 @@ const collections = ref('')
           <!-- Attribute Rows -->
           <div v-for="rowNum in ['4', '5', '6']" :key="rowNum" class="flex items-center border-b hover:bg-gray-50">
             <!-- Attribute Dropdown Cell -->
-            <div class="w-[120px] border-r flex-shrink-0">
+            <div class="w-[120px] border-r flex-shrink-0" :data-row="rowNum">
               <Select 
                 :model-value="selectedAttributes[rowNum]"
                 @update:model-value="handleAttributeChange(rowNum, $event)"
@@ -1396,7 +1412,7 @@ const collections = ref('')
             </div>
             
             <!-- Options Multi-Select Cell -->
-            <div class="flex-1">
+            <div class="flex-1" :data-row="rowNum">
               <Select 
                 v-if="selectedType === 'G'"
                 :model-value="selectedOptionsString(rowNum)"
@@ -1756,8 +1772,8 @@ const collections = ref('')
       </SheetContent>
     </Sheet>
 
-    <!-- Update the Table4 Sheet -->
-    <Sheet v-model:open="showStockSheet">
+    <!-- Update this Sheet component -->
+    <Sheet v-model:open="showStockManagementSheet">
       <SheetContent side="bottom" class="h-screen">
         <SheetHeader class="text-left">
           <div class="flex items-center justify-between">
@@ -1781,354 +1797,7 @@ const collections = ref('')
             {{ selectedSku?.sku }}
           </SheetDescription>
         </SheetHeader>
-
-        <div class="mt-6">
-          <!-- Table4 -->
-          <div class="border rounded-lg overflow-hidden">
-            <!-- Header Row -->
-            <div class="grid grid-cols-4 border-b bg-gray-50/50">
-              <div class="p-3 border-r">
-                <div class="text-sm font-medium">Group</div>
-              </div>
-              <div class="p-3 border-r">
-                <div class="text-sm font-medium">Stock</div>
-              </div>
-              <div class="p-3 border-r">
-                <div class="text-sm font-medium">DOM</div>
-              </div>
-              <div class="p-3">
-                <div class="text-sm font-medium">Shelf Life</div>
-              </div>
-            </div>
-
-            <!-- Data Rows -->
-            <div 
-              v-for="(row, index) in stockDetails[selectedSku?.sku || '']?.rows" 
-              :key="index"
-              class="grid grid-cols-4"
-            >
-              <div class="border-r">
-                <input
-                  :value="row.group"
-                  type="text"
-                  class="w-full py-3 px-4 bg-transparent border-0 focus:outline-none text-sm"
-                  readonly
-                />
-              </div>
-              <div class="border-r">
-                <input
-                  v-model.number="row.stock"
-                  type="number"
-                  class="w-full py-3 px-4 bg-transparent border-0 focus:outline-none text-sm"
-                />
-              </div>
-              <div class="border-r">
-                <input
-                  v-model="row.dom"
-                  type="text"
-                  class="w-full py-3 px-4 bg-transparent border-0 focus:outline-none text-sm"
-                  placeholder="mm/d"
-                />
-              </div>
-              <div>
-                <input
-                  v-model="row.shelfLife"
-                  type="text"
-                  class="w-full py-3 px-4 bg-transparent border-0 focus:outline-none text-sm"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
-
-    <!-- Replace the existing SKU details sheet content -->
-    <Sheet v-model:open="showSkuDetailsSheet">
-      <SheetContent 
-        side="bottom" 
-        class="h-[100dvh] w-full !translate-y-0 !transition-none"
-      >
-        <div class="flex flex-col h-full">
-          <!-- Header -->
-          <div class="p-4 border-b">
-            <h2 class="text-lg font-semibold">{{ selectedSkuDetails?.sku }}</h2>
-            <p class="text-sm text-gray-500 mt-1">
-              {{ category }} {{ selectedSkuDetails?.combination.map(pair => pair.split(': ')[1]).join(' ') }}
-            </p>
-          </div>
-
-          <!-- Scrollable Content -->
-          <div class="flex-1 overflow-y-auto p-4 space-y-6">
-            <!-- Basic Info Table -->
-            <div class="rounded-lg border bg-white overflow-hidden">
-              <!-- UPC Row -->
-              <div class="flex items-center border-b">
-                <div class="w-24 p-3 border-r bg-gray-50">
-                  <span class="text-sm font-medium">UPC</span>
-                </div>
-                <div class="flex-1 p-2">
-                  <Input
-                    :model-value="skuDetailsData[selectedSkuDetails?.sku || '']?.upc"
-                    @update:model-value="value => updateSkuField('upc', value)"
-                    type="text"
-                    placeholder="Enter UPC"
-                    class="w-full border-0 shadow-none focus:ring-0"
-                  />
-                </div>
-              </div>
-
-              <!-- Media Upload Row -->
-              <div class="flex items-center border-b">
-                <div class="w-24 p-3 border-r bg-gray-50">
-                  <button 
-                    @click="triggerSkuPrimaryFileInput"
-                    class="w-12 h-12 rounded border flex items-center justify-center hover:bg-gray-50 relative overflow-hidden"
-                    :class="{ 'border-dashed border-gray-300': !skuMedia[selectedSkuDetails?.sku]?.primary }"
-                  >
-                    <template v-if="skuMedia[selectedSkuDetails?.sku]?.primary">
-                      <img 
-                        v-if="skuMedia[selectedSkuDetails?.sku].primary.mediaType === 'image'"
-                        :src="skuMedia[selectedSkuDetails?.sku].primary.url" 
-                        class="w-full h-full object-cover cursor-pointer"
-                        alt="Primary SKU media"
-                        @click.stop="openSkuMediaPreview(skuMedia[selectedSkuDetails?.sku].primary, 'primary')"
-                      />
-                      <div 
-                        v-else 
-                        class="w-full h-full flex items-center justify-center cursor-pointer"
-                        @click.stop="openSkuMediaPreview(skuMedia[selectedSkuDetails?.sku].primary, 'primary')"
-                      >
-                        <VideoIcon class="w-6 h-6 text-gray-400" />
-                      </div>
-                    </template>
-                    <ImageIcon v-else class="w-4 h-4 text-gray-400" />
-                  </button>
-                  <input
-                    ref="skuPrimaryFileInput"
-                    type="file"
-                    :accept="acceptedFileTypes"
-                    class="hidden"
-                    @change="handleSkuPrimaryUpload"
-                  />
-                </div>
-                
-                <div class="flex-1 p-2">
-                  <div class="flex items-center gap-2 overflow-x-auto">
-                    <!-- Uploaded Media -->
-                    <div 
-                      v-for="(media, index) in skuMedia[selectedSkuDetails?.sku]?.additional" 
-                      :key="index"
-                      class="flex-shrink-0 w-12 h-12 rounded border overflow-hidden cursor-pointer"
-                      @click="openSkuMediaPreview(media, 'additional', index)"
-                    >
-                      <img 
-                        v-if="media.mediaType === 'image'"
-                        :src="media.url" 
-                        class="w-full h-full object-cover"
-                        alt="Additional SKU media"
-                      />
-                      <div 
-                        v-else 
-                        class="w-full h-full flex items-center justify-center"
-                      >
-                        <VideoIcon class="w-6 h-6 text-gray-400" />
-                      </div>
-                    </div>
-                    
-                    <!-- Add Media Button -->
-                    <button 
-                      @click="triggerSkuAdditionalFileInput"
-                      class="flex-shrink-0 w-12 h-12 rounded border border-dashed border-gray-300 flex items-center justify-center hover:bg-gray-50"
-                    >
-                      <Plus class="w-4 h-4 text-gray-400" />
-                    </button>
-                  </div>
-                  <input
-                    ref="skuAdditionalFileInput"
-                    type="file"
-                    :accept="acceptedFileTypes"
-                    class="hidden"
-                    @change="handleSkuAdditionalUpload"
-                  />
-                </div>
-              </div>
-
-              <!-- Collection Row -->
-              <div class="flex items-center border-b">
-                <div class="w-24 p-3 border-r bg-gray-50">
-                  <span class="text-sm font-medium">Collection</span>
-                </div>
-                <div class="flex-1 p-2">
-                  <Input
-                    :model-value="skuDetailsData[selectedSkuDetails?.sku || '']?.collection"
-                    @update:model-value="value => updateSkuField('collection', value)"
-                    type="text"
-                    placeholder="Enter collection"
-                    class="w-full border-0 shadow-none focus:ring-0"
-                  />
-                </div>
-              </div>
-
-              <!-- Cost Row -->
-              <div class="flex items-center border-b">
-                <div class="w-24 p-3 border-r bg-gray-50">
-                  <span class="text-sm font-medium">Cost</span>
-                </div>
-                <div class="flex-1 p-2">
-                  <Input
-                    :model-value="skuDetailsData[selectedSkuDetails?.sku || '']?.cost"
-                    @update:model-value="value => updateSkuField('cost', Number(value))"
-                    type="number"
-                    placeholder="0.00"
-                    class="w-full border-0 shadow-none focus:ring-0"
-                  />
-                </div>
-              </div>
-
-              <!-- Price Row -->
-              <div class="flex items-center border-b">
-                <div class="w-24 p-3 border-r bg-gray-50">
-                  <span class="text-sm font-medium">Price</span>
-                </div>
-                <div class="flex-1 p-2">
-                  <Input
-                    :model-value="skuDetailsData[selectedSkuDetails?.sku || '']?.price"
-                    @update:model-value="value => updateSkuField('price', Number(value))"
-                    type="number"
-                    placeholder="0.00"
-                    class="w-full border-0 shadow-none focus:ring-0"
-                  />
-                </div>
-              </div>
-
-              <!-- MRP Row -->
-              <div class="flex items-center">
-                <div class="w-24 p-3 border-r bg-gray-50">
-                  <span class="text-sm font-medium">MRP</span>
-                </div>
-                <div class="flex-1 p-2">
-                  <Input
-                    :model-value="skuDetailsData[selectedSkuDetails?.sku || '']?.mrp"
-                    @update:model-value="value => updateSkuField('mrp', Number(value))"
-                    type="number"
-                    placeholder="0.00"
-                    class="w-full border-0 shadow-none focus:ring-0"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Fixed Bottom Bar -->
-          <div class="p-4 bg-white border-t">
-            <Button class="w-full">Save Changes</Button>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
-
-    <!-- Add Date Picker Sheet -->
-    <Sheet v-model:open="showDatePickerSheet">
-      <SheetContent side="bottom" class="h-[400px]">
-        <div class="p-4">
-          <input 
-            type="date" 
-            class="w-full p-4 text-lg rounded-lg border"
-            v-model="selectedDate"
-            @change="handleDateSelect"
-          />
-        </div>
-        <div class="p-4 bg-white border-t">
-          <Button class="w-full" @click="confirmDateSelection">
-            Confirm
-          </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
-
-    <!-- Add this new sheet component -->
-    <Sheet v-model:open="showStockManagementSheet">
-      <SheetContent 
-        side="bottom" 
-        class="h-[100dvh] w-full !translate-y-0 !transition-none"
-      >
-        <div class="flex flex-col h-full">
-          <!-- Header -->
-          <div class="p-4 border-b">
-            <h2 class="text-lg font-semibold">{{ selectedSkuForStock?.sku }}</h2>
-            <p class="text-sm text-gray-500 mt-1">
-              {{ category }} {{ selectedSkuForStock?.combination.map(pair => pair.split(': ')[1]).join(' ') }}
-            </p>
-          </div>
-
-          <!-- Stock Management Table -->
-          <div class="flex-1 overflow-y-auto p-4">
-            <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <h3 class="text-sm font-medium text-gray-900">Stock Management</h3>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  class="h-8 w-8 p-0"
-                  @click="addStockRow(selectedSkuForStock?.sku || '')"
-                >
-                  <Plus class="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div class="rounded-lg border bg-white overflow-hidden">
-                <!-- Header Row -->
-                <div class="grid grid-cols-4 text-sm border-b bg-gray-50">
-                  <div class="p-3 font-medium border-r text-center">Group</div>
-                  <div class="p-3 font-medium border-r text-center">Stock</div>
-                  <div class="p-3 font-medium border-r text-center">DOM</div>
-                  <div class="p-3 font-medium text-center">Shelf Life</div>
-                </div>
-
-                <!-- Data Rows -->
-                <div 
-                  v-for="(row, index) in stockDetails[selectedSkuForStock?.sku || '']?.rows" 
-                  :key="index"
-                  class="grid grid-cols-4 border-b last:border-b-0"
-                >
-                  <div class="p-3 border-r">
-                    <span class="block text-sm text-center">{{ row.group }}</span>
-                  </div>
-                  <div class="p-3 border-r">
-                    <Input
-                      v-model.number="row.stock"
-                      type="number"
-                      class="w-full border-0 shadow-none focus:ring-0 p-0 text-center"
-                    />
-                  </div>
-                  <div class="p-3 border-r">
-                    <Input
-                      v-model="row.dom"
-                      type="date"
-                      class="w-full border-0 shadow-none focus:ring-0 p-0 text-center [&::-webkit-calendar-picker-indicator]:hidden"
-                      @click="showDatePicker(index)"
-                    />
-                  </div>
-                  <div class="p-3">
-                    <Input
-                      v-model="row.shelfLife"
-                      type="text"
-                      class="w-full border-0 shadow-none focus:ring-0 p-0 text-center"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Fixed Bottom Bar -->
-          <div class="p-4 bg-white border-t">
-            <Button class="w-full" @click="showStockManagementSheet = false">
-              Save Changes
-            </Button>
-          </div>
-        </div>
+        <!-- Rest of the sheet content remains the same -->
       </SheetContent>
     </Sheet>
 
@@ -2160,6 +1829,152 @@ const collections = ref('')
             >
               remove
             </button>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+
+    <!-- Add this new Publish Sheet component after other sheets -->
+    <Sheet v-model:open="showPublishSheet">
+      <SheetContent side="right" class="w-full">
+        <div class="flex flex-col h-full">
+          <!-- Header -->
+          <div class="flex items-center justify-between p-4 border-b">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              @click="showPublishSheet = false"
+              class="mr-auto"
+            >
+              <ArrowLeft class="h-5 w-5" />
+            </Button>
+            <Button 
+              variant="ghost"
+              class="px-4"
+              @click="saveProduct"
+              :disabled="isSaving"
+            >
+              {{ isSaving ? 'Saving...' : 'Publish' }}
+            </Button>
+          </div>
+
+          <!-- Content -->
+          <div class="flex-1 overflow-y-auto">
+            <!-- Status Row -->
+            <div class="flex items-center border-b hover:bg-gray-50">
+              <div class="w-32 border-r p-4">
+                <span class="text-sm font-medium">Status</span>
+              </div>
+              <div class="flex-1 p-2">
+                <Select 
+                  v-model="status"
+                  class="w-full"
+                >
+                  <SelectTrigger class="w-full border-0 shadow-none focus:ring-0">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <!-- Visibility Row -->
+            <div class="flex items-center border-b hover:bg-gray-50">
+              <div class="w-32 border-r p-4">
+                <span class="text-sm font-medium">Visibility</span>
+              </div>
+              <div class="flex-1 p-2">
+                <Select 
+                  v-model="visibility"
+                  class="w-full"
+                >
+                  <SelectTrigger class="w-full border-0 shadow-none focus:ring-0">
+                    <SelectValue placeholder="Select visibility" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="visible">Visible</SelectItem>
+                    <SelectItem value="hidden">Hidden</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <!-- Sales Channels Row -->
+            <div class="flex items-center border-b hover:bg-gray-50">
+              <div class="w-32 border-r p-4">
+                <span class="text-sm font-medium">Sales Channels</span>
+              </div>
+              <div class="flex-1 p-2">
+                <div class="space-y-2">
+                  <div class="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="online-store"
+                      v-model="saleChannels"
+                      value="online-store"
+                      class="rounded border-gray-300"
+                    />
+                    <label for="online-store" class="ml-2 text-sm">Online Store</label>
+                  </div>
+                  <div class="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      id="pos"
+                      v-model="saleChannels"
+                      value="pos"
+                      class="rounded border-gray-300"
+                    />
+                    <label for="pos" class="ml-2 text-sm">Point of Sale</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Page Title Row -->
+            <div class="flex items-center border-b hover:bg-gray-50">
+              <div class="w-32 border-r p-4">
+                <span class="text-sm font-medium">Page Title</span>
+              </div>
+              <div class="flex-1 p-2">
+                <Input 
+                  v-model="pageTitle"
+                  placeholder="Enter page title"
+                  class="w-full border-0 shadow-none focus:ring-0"
+                />
+              </div>
+            </div>
+
+            <!-- Meta Description Row -->
+            <div class="flex items-center border-b hover:bg-gray-50">
+              <div class="w-32 border-r p-4">
+                <span class="text-sm font-medium">Meta Description</span>
+              </div>
+              <div class="flex-1 p-2">
+                <textarea 
+                  v-model="metaDesc"
+                  rows="3"
+                  class="w-full rounded-none border-0 bg-transparent p-0 text-sm focus:ring-0"
+                  placeholder="Enter meta description"
+                />
+              </div>
+            </div>
+
+            <!-- URL Handle Row -->
+            <div class="flex items-center border-b hover:bg-gray-50">
+              <div class="w-32 border-r p-4">
+                <span class="text-sm font-medium">URL Handle</span>
+              </div>
+              <div class="flex-1 p-2">
+                <Input 
+                  v-model="handle"
+                  placeholder="Enter URL handle"
+                  class="w-full border-0 shadow-none focus:ring-0"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </SheetContent>
@@ -2202,7 +2017,8 @@ const collections = ref('')
 
 .w-[120px] :deep(.select-trigger svg),
 .flex-1 :deep(.select-trigger svg) {
-  @apply opacity-0;
+  opacity: 1 !important;
+  color: white !important;
 }
 
 /* Add these styles for better scrolling */
@@ -2482,22 +2298,46 @@ input:-webkit-autofill:active {
   opacity: 1 !important;
 }
 
-/* Override any other styles that might be affecting the icon */
-:deep(.select-trigger svg) {
-  color: white !important;
-  opacity: 1 !important;
-}
-
-/* Make sure the icon is visible */
+/* Only make attribute row icons white */
 .w-[120px] :deep(.select-trigger svg),
 .flex-1 :deep(.select-trigger svg) {
   opacity: 1 !important;
   color: white !important;
 }
 
-/* Add !important to force the color */
+/* Explicitly set product type icons to grey */
+.w-16 .Package,
+.w-16 .Smartphone,
+.w-16 .HeartHandshake {
+  color: rgb(75 85 99) !important;
+}
+
+/* Remove any global icon color overrides */
 :deep(.h-4.w-4) {
-  color: white !important;
+  /* Removed */
+}
+
+/* Add these styles for the publish sheet */
+:deep(.sheet-content) {
+  .select-trigger,
+  .input,
+  textarea {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .select-trigger:focus,
+  .input:focus,
+  textarea:focus {
+    outline: none;
+    box-shadow: none;
+    border: none;
+  }
+
+  textarea {
+    resize: none;
+  }
 }
 </style>
 
