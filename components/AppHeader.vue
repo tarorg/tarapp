@@ -24,6 +24,7 @@ import {
   Circle,
   Layers,
   FolderClosed,
+  Tag,
 } from 'lucide-vue-next'
 
 const menuSearchQuery = ref('')
@@ -37,7 +38,8 @@ const menuItems = [
       { icon: Package, label: 'Products', link: '/products' },
       { icon: Layers, label: 'Stocks', link: '/stocks' },
       { icon: Settings, label: 'Options', link: '/options' },
-      { icon: FolderClosed, label: 'Collections', link: '/collections' }
+      { icon: FolderClosed, label: 'Collections', link: '/collections' },
+      { icon: Tag, label: 'Tags', link: '/tags' }
     ]
   },
   { icon: BarChart, label: 'Reports', link: '/reports' },

@@ -110,7 +110,7 @@ CREATE TABLE products (
 
 
 
-CREATE TABLE stores (
+ TABLE stores (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     domain TEXT NOT NULL UNIQUE,
@@ -138,7 +138,7 @@ CREATE TABLE stores (
 );
 
 -- Modified junction table for Nhost users
-CREATE TABLE storeusers (
+ TABLE storeusers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     storeid INTEGER NOT NULL,
     userid TEXT NOT NULL, -- Changed to TEXT to store Nhost UUID
@@ -179,3 +179,28 @@ INSERT INTO products (
         weight,
         weightunit
       )
+
+      ---------------------------------------------------------
+
+      -- Collections Table
+CREATE TABLE collections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    storeid INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    handle TEXT NOT NULL UNIQUE, -- Ensures a unique SEO-friendly URL identifier
+    description TEXT,
+    image TEXT,                 -- Stored as a JSON string (e.g., JSON.stringify)
+    type TEXT NOT NULL,         -- Kept as TEXT without constraints
+    conditions TEXT,            -- Stored as a JSON string
+    productscount INTEGER DEFAULT 0,
+    active TEXT DEFAULT 'true', -- Changed to TEXT with a default value of 'true'
+    createdat DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tags Table
+CREATE TABLE tags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    storeid INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    createdat DATETIME DEFAULT CURRENT_TIMESTAMP
+);
