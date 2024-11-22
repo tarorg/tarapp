@@ -6,7 +6,7 @@
         <Button variant="ghost" size="icon" @click="router.back()">
           <ArrowLeft class="h-4 w-4" />
         </Button>
-        <h1 class="text-base font-medium">Store Details</h1>
+        <h1 class="text-base font-medium">Pin - Store Details</h1>
       </div>
       <div>
         <Button 
@@ -59,7 +59,7 @@
           </div>
 
           <!-- Name Cell -->
-          <div class="flex-1 border-r">
+          <div class="flex-1">
             <Input
               v-model="store.name"
               type="text"
@@ -67,29 +67,11 @@
               class="w-full px-4 py-3"
             />
           </div>
-
-          <!-- Store Status Cell -->
-          <div class="w-[72px] flex items-center justify-center">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              @click="toggleStoreStatus"
-              :class="store.active ? 'text-green-500' : 'text-gray-400'"
-            >
-              <Power v-if="store.active" class="h-4 w-4" />
-              <PowerOff v-else class="h-4 w-4" />
-            </Button>
-          </div>
         </div>
 
         <!-- Row 2: Favicon and Brand Color -->
         <div class="flex items-center border-b">
-          <!-- Favicon Text Cell -->
-          <div class="w-[72px] border-r">
-            <span class="block px-4 py-3 text-sm">favicon</span>
-          </div>
-
-          <!-- Favicon Image Cell -->
+          <!-- Favicon Cell -->
           <div class="w-[72px] border-r">
             <div class="relative h-12 w-12 mx-auto">
               <input
@@ -110,18 +92,18 @@
             </div>
           </div>
 
-          <!-- Brand Color Text Cell -->
-          <div class="w-[72px] border-r">
-            <span class="block px-4 py-3 text-sm">brand color</span>
-          </div>
-
           <!-- Color Picker Cell -->
-          <div class="w-[72px]">
+          <div class="w-[72px] border-r">
             <input
               type="color"
               v-model="store.color"
               class="w-12 h-12 cursor-pointer mx-auto block"
             />
+          </div>
+
+          <!-- Remaining space -->
+          <div class="flex-1">
+            <!-- Can be used for additional content -->
           </div>
         </div>
 
@@ -376,7 +358,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -406,8 +388,11 @@ import {
 } from 'lucide-vue-next'
 
 const router = useRouter()
-const store = ref({
-  id: 14, // Changed to store ID 14
+const route = useRoute()
+
+// Define store data type using JS object
+const storeShape = {
+  id: null,
   type: '',
   name: '',
   domain: '',
@@ -427,7 +412,10 @@ const store = ref({
   favicon: '',
   color: '',
   social: '',
-})
+  active: true
+}
+
+const store = ref(storeShape)
 
 const isLoading = ref(true)
 const isSaving = ref(false)
@@ -509,12 +497,17 @@ const removeSocialRow = (index) => {
   socialRows.value.splice(index, 1)
 }
 
-// Updated fetch function with error handling
+// Update the fetch function to properly parse the data
 const fetchStoreDetails = async () => {
   try {
     isLoading.value = true
     loadError.value = null
     
+    const storeId = route.query.id
+    if (!storeId) {
+      throw new Error('No store ID provided')
+    }
+
     const url = "https://commerce-tarframework.turso.io/v2/pipeline"
     const authToken = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3Mjk2NzQwNjQsImlkIjoiN2ZiNTFhMTgtYjU1My00Y2M2LTkwZWItZDE0ZTcxNDI5ODlhIn0.zxIjODPlBzNcAgQQ70xZj2sI7j7RSAHpYPQUtvyoAHDb4nLGzHAPiVvnJ6qeK7-00F8A6Lz__CSPjdITPZ31BQ"
 
@@ -528,8 +521,8 @@ const fetchStoreDetails = async () => {
         requests: [{
           type: "execute",
           stmt: {
-            sql: "SELECT * FROM stores WHERE id = 14",
-            args: []
+            sql: "SELECT * FROM stores WHERE id = ?",
+            args: [{ value: storeId, type: "text" }]
           }
         }]
       })
@@ -540,27 +533,41 @@ const fetchStoreDetails = async () => {
     }
 
     const data = await response.json()
-    
-    if (data.error) {
-      throw new Error(data.error)
-    }
-
     const storeData = data?.results?.[0]?.response?.result?.rows?.[0]
     
     if (!storeData) {
       throw new Error('No store data found')
     }
 
-    // Update store data
+    // Map the row data to store fields without type assertions
     store.value = {
-      ...store.value,
-      ...storeData
+      id: storeId,
+      type: storeData[1]?.value || '',
+      name: storeData[2]?.value || '',
+      domain: storeData[3]?.value || '',
+      email: storeData[4]?.value || '',
+      phone: storeData[5]?.value || '',
+      address: storeData[6]?.value || '',
+      addressext: storeData[7]?.value || '',
+      city: storeData[8]?.value || '',
+      state: storeData[9]?.value || '',
+      country: storeData[10]?.value || '',
+      postalcode: storeData[11]?.value || '',
+      currency: storeData[12]?.value || 'USD',
+      timezone: storeData[13]?.value || '',
+      locale: storeData[14]?.value || 'en',
+      weightunit: storeData[15]?.value || 'kg',
+      logo: storeData[16]?.value || '',
+      favicon: storeData[17]?.value || '',
+      color: storeData[18]?.value || '',
+      social: storeData[19]?.value || '',
+      active: Boolean(storeData[20]?.value)
     }
 
-    // After fetching store data, parse social data
-    if (storeData.social) {
+    // Parse social data
+    if (store.value.social) {
       try {
-        socialRows.value = JSON.parse(storeData.social)
+        socialRows.value = JSON.parse(store.value.social)
       } catch (e) {
         socialRows.value = []
       }
@@ -574,15 +581,19 @@ const fetchStoreDetails = async () => {
   }
 }
 
-// Updated save function with error handling
+// Update the save function to handle the data correctly
 const saveStoreDetails = async () => {
   try {
     isSaving.value = true
     
+    const storeId = route.query.id
+    if (!storeId) {
+      throw new Error('No store ID provided')
+    }
+
     const url = "https://commerce-tarframework.turso.io/v2/pipeline"
     const authToken = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3Mjk2NzQwNjQsImlkIjoiN2ZiNTFhMTgtYjU1My00Y2M2LTkwZWItZDE0ZTcxNDI5ODlhIn0.zxIjODPlBzNcAgQQ70xZj2sI7j7RSAHpYPQUtvyoAHDb4nLGzHAPiVvnJ6qeK7-00F8A6Lz__CSPjdITPZ31BQ"
 
-    // Before saving, stringify social data
     const storeData = {
       ...store.value,
       social: JSON.stringify(socialRows.value)
@@ -595,50 +606,55 @@ const saveStoreDetails = async () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        statements: [
-          {
+        requests: [{
+          type: "execute",
+          stmt: {
             sql: `UPDATE stores SET 
               name = ?, domain = ?, email = ?, phone = ?,
               address = ?, addressext = ?, city = ?, state = ?,
               country = ?, postalcode = ?, currency = ?, timezone = ?,
               locale = ?, weightunit = ?, logo = ?, favicon = ?,
-              color = ?, social = ?, updatedat = CURRENT_TIMESTAMP
-              WHERE id = ? AND active = true`,
+              color = ?, social = ?, active = ?
+              WHERE id = ?`,
             args: [
-              storeData.name,
-              storeData.domain,
-              storeData.email,
-              storeData.phone,
-              storeData.address,
-              storeData.addressext,
-              storeData.city,
-              storeData.state,
-              storeData.country,
-              storeData.postalcode,
-              storeData.currency,
-              storeData.timezone,
-              storeData.locale,
-              storeData.weightunit,
-              storeData.logo,
-              storeData.favicon,
-              storeData.color,
-              storeData.social,
-              storeData.id
+              { value: storeData.name || '', type: "text" },
+              { value: storeData.domain || '', type: "text" },
+              { value: storeData.email || '', type: "text" },
+              { value: storeData.phone || '', type: "text" },
+              { value: storeData.address || '', type: "text" },
+              { value: storeData.addressext || '', type: "text" },
+              { value: storeData.city || '', type: "text" },
+              { value: storeData.state || '', type: "text" },
+              { value: storeData.country || '', type: "text" },
+              { value: storeData.postalcode || '', type: "text" },
+              { value: storeData.currency || 'USD', type: "text" },
+              { value: storeData.timezone || '', type: "text" },
+              { value: storeData.locale || 'en', type: "text" },
+              { value: storeData.weightunit || 'kg', type: "text" },
+              { value: storeData.logo || '', type: "text" },
+              { value: storeData.favicon || '', type: "text" },
+              { value: storeData.color || '', type: "text" },
+              { value: storeData.social || '', type: "text" },
+              { value: storeData.active ? "true" : "false", type: "text" },
+              { value: storeId, type: "text" }
             ]
           }
-        ]
+        }]
       })
     })
 
     if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Server response:', errorText)
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
     const result = await response.json()
-    
     if (result.error) {
       throw new Error(result.error)
     }
+
+    console.log('Store updated successfully')
 
   } catch (error) {
     console.error('Error saving store details:', error)

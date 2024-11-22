@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { useAuthData } from '~/composables/useAuthData'
 import { Button } from '@/components/ui/button'
-import { User, Mail, Key, ArrowLeft, LogOut, Database } from 'lucide-vue-next'
+import { User, Mail, Key, ArrowLeft, LogOut, Database, LogOutIcon } from 'lucide-vue-next'
 import { useNhost } from '~/plugins/nhost'
 
 interface TarRecord {
-  id: number
-  userid: string
-  type: string
+  type: 'pin' | 'par'
   tarid: string
   plan: string
 }
@@ -30,6 +28,8 @@ const fetchTarRecords = async () => {
     const url = "https://commerce-tarframework.turso.io/v2/pipeline"
     const authToken = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3Mjk2NzQwNjQsImlkIjoiN2ZiNTFhMTgtYjU1My00Y2M2LTkwZWItZDE0ZTcxNDI5ODlhIn0.zxIjODPlBzNcAgQQ70xZj2sI7j7RSAHpYPQUtvyoAHDb4nLGzHAPiVvnJ6qeK7-00F8A6Lz__CSPjdITPZ31BQ"
 
+    const types = ['pin', 'par'] as const
+    
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -40,31 +40,44 @@ const fetchTarRecords = async () => {
         requests: [{
           type: "execute",
           stmt: {
-            sql: "SELECT id, userid, type, tarid, plan FROM tar WHERE userid = ?",
-            args: [{ value: userData.value.id, type: "text" }]
+            sql: "SELECT type, tarid, plan FROM tar WHERE userid = ? AND type IN (?, ?)",
+            args: [
+              { value: userData.value.id, type: "text" },
+              { value: "pin", type: "text" },
+              { value: "par", type: "text" }
+            ]
           }
         }]
       }),
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Server response:', errorText)
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
     const result = await response.json()
-    console.log('Raw API Response:', result)
-    
     const rows = result?.results?.[0]?.response?.result?.rows || []
     
-    tarRecords.value = rows.map((row: any) => ({
-      id: row[0]?.value || 0,
-      userid: row[1]?.value || '',
-      type: row[2]?.value || '',
-      tarid: row[3]?.value || '',
-      plan: row[4]?.value || ''
-    }))
+    // Create a map of existing records with proper typing
+    const recordsMap = new Map<string, TarRecord>(
+      rows.map((row: any) => [
+        row[0]?.value || '',
+        {
+          type: row[0]?.value as 'pin' | 'par',
+          tarid: row[1]?.value || '',
+          plan: row[2]?.value || ''
+        }
+      ])
+    )
+
+    // Create the final array with proper typing
+    tarRecords.value = types.map(type => 
+      recordsMap.get(type) || {
+        type,
+        tarid: '-',
+        plan: '-'
+      }
+    ) as TarRecord[]
 
   } catch (error) {
     console.error('Failed to fetch TAR records:', error)
@@ -119,59 +132,32 @@ const formatDate = (dateString: string) => {
 
     <!-- Logged In State -->
     <template v-else>
-      <div class="flex justify-between items-center mb-6">
-        <Button @click="goBack" variant="ghost" class="gap-2">
-          <ArrowLeft class="h-4 w-4" />
-          Profile
-        </Button>
-        <Button variant="ghost" size="icon" @click="handleSignOut" class="text-muted-foreground hover:text-destructive">
-          <LogOut class="h-5 w-5" />
-        </Button>
-      </div>
-      
       <div v-if="userData" class="space-y-6">
-        <!-- Profile Header -->
-        <div class="flex items-center space-x-4 mb-6">
-          <div class="h-16 w-16 rounded-full overflow-hidden bg-muted flex items-center justify-center">
-            <img 
-              v-if="userData.avatar" 
-              :src="userData.avatar" 
-              :alt="userData.name"
-              class="h-full w-full object-cover"
-            />
-            <User v-else class="h-8 w-8 text-muted-foreground" />
-          </div>
-          <div>
-            <h2 class="text-xl font-medium">{{ userData.name }}</h2>
-            <p class="text-sm text-muted-foreground">{{ userData.email }}</p>
-          </div>
-        </div>
-
-        <!-- Profile Details -->
-        <div class="space-y-1 bg-muted/5">
-          <div class="flex items-center p-3 hover:bg-muted/10 rounded-lg">
-            <Key class="h-4 w-4 text-muted-foreground mr-3" />
+        <!-- Profile Header with Navigation -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="h-16 w-16 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+              <img 
+                v-if="userData.avatar" 
+                :src="userData.avatar" 
+                :alt="userData.name"
+                class="h-full w-full object-cover"
+              />
+              <User v-else class="h-8 w-8 text-muted-foreground" />
+            </div>
             <div>
-              <p class="text-sm text-muted-foreground break-all">{{ userData.id }}</p>
+              <h2 class="text-xl font-medium">{{ userData.name }}</h2>
+              <p class="text-sm text-muted-foreground">{{ userData.email }}</p>
             </div>
           </div>
+          <Button variant="ghost" size="icon" @click="handleSignOut" class="text-muted-foreground hover:text-destructive">
+            <LogOutIcon class="h-5 w-5 rotate-180" />
+          </Button>
         </div>
 
         <!-- TAR Table -->
         <div class="mt-6">
-          <div class="flex items-center space-x-2 mb-2">
-            <Database class="h-4 w-4 text-muted-foreground" />
-            <span class="text-sm font-medium">TAR</span>
-          </div>
-          
           <div class="border rounded-lg overflow-hidden">
-            <!-- Table Header -->
-            <div class="grid grid-cols-3 bg-muted/5 border-b text-sm font-medium">
-              <div class="p-2">Type</div>
-              <div class="p-2">TAR ID</div>
-              <div class="p-2">Plan</div>
-            </div>
-            
             <!-- Loading State -->
             <div v-if="isLoadingTar" class="p-4 text-center text-sm text-muted-foreground">
               Loading...
@@ -183,21 +169,26 @@ const formatDate = (dateString: string) => {
             </div>
             
             <!-- Table Content -->
-            <div v-else-if="tarRecords.length > 0" class="divide-y">
+            <div v-else class="divide-y">
+              <!-- Header Row -->
+              <div class="grid text-sm" style="grid-template-columns: 80px 1fr 1fr;">
+                <div class="p-2 pl-3">tar id</div>
+                <div class="p-2 col-span-2">{{ userData?.id }}</div>
+              </div>
+
+              <!-- Data Rows -->
               <div 
                 v-for="record in tarRecords" 
-                :key="record.id"
-                class="grid grid-cols-3 text-sm hover:bg-muted/5"
+                :key="record.type"
+                class="grid text-sm hover:bg-muted/5"
+                style="grid-template-columns: 80px 1fr 1fr;"
+                :class="{ 'cursor-pointer': record.type === 'pin' }"
+                @click="record.type === 'pin' ? router.push(`/pin?id=${record.tarid}`) : null"
               >
-                <div class="p-2">{{ record.type }}</div>
+                <div class="p-2 pl-3 capitalize">{{ record.type }}</div>
                 <div class="p-2">{{ record.tarid }}</div>
                 <div class="p-2">{{ record.plan }}</div>
               </div>
-            </div>
-            
-            <!-- Empty State -->
-            <div v-else class="p-4 text-center text-sm text-muted-foreground">
-              No TAR records found
             </div>
           </div>
         </div>
