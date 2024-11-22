@@ -60,7 +60,7 @@ stock : " "
 
 }
 
-CREATE TABLE products ( 
+ TABLE products ( 
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     storeid TEXT NOT NULL,
     type TEXT,
@@ -183,7 +183,7 @@ INSERT INTO products (
       ---------------------------------------------------------
 
       -- Collections Table
-CREATE TABLE collections (
+ TABLE collections (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     storeid INTEGER NOT NULL,
     title TEXT NOT NULL,
@@ -198,9 +198,18 @@ CREATE TABLE collections (
 );
 
 -- Tags Table
-CREATE TABLE tags (
+ TABLE tags (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     storeid INTEGER NOT NULL,
     name TEXT NOT NULL,
     createdat DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-------------------------------------------------------------------------------------------
+ TABLE tar (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, -- Auto-generated unique ID
+    userid TEXT NOT NULL,                 -- User ID as text
+    type TEXT NOT NULL,                   -- Type as text
+    tarid TEXT NOT NULL,                  -- Tar ID as text
+    plan TEXT NOT NULL                    -- Plan as text
 );

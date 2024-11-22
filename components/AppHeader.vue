@@ -25,6 +25,7 @@ import {
   Layers,
   FolderClosed,
   Tag,
+  Store,
 } from 'lucide-vue-next'
 
 const menuSearchQuery = ref('')
@@ -48,7 +49,7 @@ const menuItems = [
     label: 'Settings',
     submenu: [
       { icon: User, label: 'Profile', link: '/profile' },
-      { icon: Settings, label: 'Options', link: '/settings' }
+      { icon: Store, label: 'Store', link: '/store' }
     ]
   },
 ]
